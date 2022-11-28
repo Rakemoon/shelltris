@@ -111,6 +111,8 @@ func handleKeyboard(stdscr *Window, win *Window) {
 			MoveTetrominoDown()
 		case KEY_UP:
 			TetrominoRotateCLockWise()
+		case 529:
+			TetrominoRotateCounterCLockWise()
 		case 'c':
 			BackupTetris()
 			curTetro = createTetromino()
@@ -203,6 +205,25 @@ func TetrominoRotateCLockWise() {
 	}
 	if len(curTetro.ori) > 0 {
 		curTetro.ori = append(curTetro.ori[1:], curTetro.ori[:1]...)
+		SetOriTetromino()
+	}
+	curTetro.height, curTetro.width = oldTetro.width, oldTetro.height
+}
+
+func TetrominoRotateCounterCLockWise() {
+	BackupTetris()
+	curTetro.con = make([][]int, oldTetro.width)
+	for w := 0; w < oldTetro.width; w++ {
+		curTetro.con[w] = make([]int, oldTetro.height)
+		for h := 0; h < oldTetro.height; h++ {
+			curTetro.con[w][h] = oldTetro.con[h][w]
+		}
+	}
+	for i, j := 0, oldTetro.width-1; i < j; i, j = i+1, j-1 {
+		curTetro.con[i], curTetro.con[j] = curTetro.con[j], curTetro.con[i]
+	}
+	if len(curTetro.ori) > 0 {
+		curTetro.ori = append(curTetro.ori[3:], curTetro.ori[0:3]...)
 		SetOriTetromino()
 	}
 	curTetro.height, curTetro.width = oldTetro.width, oldTetro.height
