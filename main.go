@@ -115,6 +115,8 @@ func handleKeyboard(stdscr *Window, win *Window) {
 			TetrominoRotateCLockWise()
 		case 'z':
 			TetrominoRotateCounterCLockWise()
+		case ' ':
+			MoveTetrominoDown(true)
 		case 'c':
 			BackupTetris()
 			curTetro = createTetromino()
@@ -160,11 +162,16 @@ func MoveTetrominoRight() {
 	}
 }
 
-func MoveTetrominoDown() {
+func MoveTetrominoDown(forces ...bool) {
 	BackupTetris()
 	tetroH := curTetro.height + curOriY
 	next := curY + 1
 	if next+tetroH < 21 {
+		if len(forces) > 0 && forces[0] {
+			for next+tetroH < 20 {
+				next++
+			}
+		}
 		curY = next
 	}
 }
