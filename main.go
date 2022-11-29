@@ -18,6 +18,7 @@ type Tetromino struct {
 }
 
 var (
+	board            [][]int
 	curTetro         Tetromino
 	oldTetro         Tetromino
 	curY, curX       int
@@ -30,6 +31,8 @@ var (
 
 	isPressedSpace bool
 	isPressedDown  bool
+
+	oldPredY int
 
 	wg sync.WaitGroup
 )
@@ -60,19 +63,30 @@ func initConf(win *Window) {
 
 	win.Keypad(true)
 
-	isPressedSpace = false
-
-	InitTetromino()
+	InitBoard()
+	InitTetromino(7)
 }
 
-func InitTetromino() {
+func InitBoard() {
+	board = make([][]int, 20)
+	for i := 0; i < 20; i++ {
+		board[i] = make([]int, 10)
+	}
+}
+
+func InitTetromino(posX int) {
 	curTetro = createTetromino()
-	oldX, oldY = 7, 1
-	curX, curY = 7, 1
+	oldX, oldY = posX, 2-curTetro.height
+	curX, curY = posX, 2-curTetro.height
 	ori = 1
 	curOriX, curOriY = 0, 0
 	oldOriX, oldOriY = 0, 0
+	oldPredY = 0
 	isTetroDown = false
+
+	for curX+curOriX+curTetro.width*2 >= 22 {
+		curX -= 2
+	}
 }
 
 func main() {
@@ -86,7 +100,7 @@ func main() {
 
 	headerPrint(stdscr, 0, 0)
 
-	win, _ := NewWindow(21, 22, 6, 0)
+	win, _ := NewWindow(22, 22, 6, 0)
 	win.Box(0, 0)
 	win.Refresh()
 
@@ -116,6 +130,7 @@ func GoDownPLEASE(win *Window) {
 func handleKeyboard(stdscr *Window, win *Window) {
 	defer wg.Done()
 	for !isEnd {
+		stdscr.Refresh()
 		input := stdscr.GetChar()
 		BackupTetris()
 		switch Key(input) {
@@ -124,9 +139,13 @@ func handleKeyboard(stdscr *Window, win *Window) {
 		case 'q':
 			isEnd = true
 		case KEY_LEFT:
-			MoveTetrominoLeft()
+			if moved := MoveTetrominoLeft(); !moved {
+				continue
+			}
 		case KEY_RIGHT:
-			MoveTetrominoRight()
+			if moved := MoveTetrominoRight(); !moved {
+				continue
+			}
 		case KEY_DOWN:
 			isPressedDown = true
 			MoveTetrominoDown()
@@ -140,21 +159,45 @@ func handleKeyboard(stdscr *Window, win *Window) {
 			MoveTetrominoDown()
 		}
 		UpdateTetris(win)
+		if isEnd {
+			stdscr.ColorOn(16)
+			stdscr.MovePrint(30, 0, "GAME OVER")
+			stdscr.ColorOff(16)
+		}
 	}
 }
 
 func UpdateTetris(win *Window) {
+	if isEnd {
+		return
+	}
 	for ty, con := range oldTetro.con {
 		for tx, s := range con {
-			if s > 0 {
+			if s > 0 && oldY+oldOriY+ty >= 1 {
 				win.MovePrint(oldY+oldOriY+ty, oldX+oldOriX+tx*2, "  ")
 			}
 		}
 	}
 	win.Refresh()
+	PrintPrediction(win)
 	printTetromino(win, curTetro, curY+curOriY, curX+curOriX)
 	if isTetroDown {
-		InitTetromino()
+	storeToBoard:
+		for ty, con := range curTetro.con {
+			for tx, s := range con {
+				if s > 0 {
+					y := curY + curOriY - 1
+					x := (curX + curOriX) / 2
+					if y < 0 || x < 0 {
+						isEnd = true
+						break storeToBoard
+					}
+					board[ty+y][tx+x] += s
+				}
+			}
+		}
+		InitTetromino(curX)
+		PrintPrediction(win)
 		printTetromino(win, curTetro, curY+curOriY, curX+curOriX)
 	}
 }
@@ -163,35 +206,108 @@ func BackupTetris() {
 	oldX, oldY, oldOriX, oldOriY, oldTetro = curX, curY, curOriX, curOriY, curTetro
 }
 
-func MoveTetrominoLeft() {
+func MoveTetrominoRight() bool {
+	if IsCanMoveRight() {
+		curX += 2
+		return true
+	}
+	return false
+}
+
+func MoveTetrominoLeft() bool {
+	if IsCanMoveLeft() {
+		curX -= 2
+		return true
+	}
+	return false
+}
+
+/*func MoveTetrominoLeft() bool {
 	next := curX - 2
 	if next+curOriX > 0 {
 		curX = next
+		return true
 	}
+	return false
 }
 
-func MoveTetrominoRight() {
+func MoveTetrominoRight() bool {
 	tetroW := curTetro.width*2 + curOriX
 	next := curX + 2
 	if next+tetroW < 22 {
 		curX = next
+		return true
 	}
+	return false
+}*/
+
+func IsCanMoveDown(yS int) bool {
+	if yS+curTetro.height+curOriY+1 < 22 {
+		if yS >= 0 {
+			y := yS + curOriY
+			x := (curX + curOriX) / 2
+			for i := 0; i < curTetro.height; i++ {
+				for j := 0; j < curTetro.width; j++ {
+					sum := curTetro.con[i][j] + board[i+y][x+j]
+					if sum > 1 {
+						return false
+					}
+				}
+			}
+		}
+		return true
+	}
+	return false
+}
+
+func IsCanMoveRight() bool {
+	if curX+curOriX+2+curTetro.width*2 < 22 {
+		if curY > 0 {
+			y := curY + curOriY - 1
+			x := ((curX + curOriX) / 2) + 1
+			for i := 0; i < curTetro.height; i++ {
+				for j := 0; j < curTetro.width; j++ {
+					sum := curTetro.con[i][j] + board[i+y][x+j]
+					if sum > 1 {
+						return false
+					}
+				}
+			}
+		}
+		return true
+	}
+	return false
+}
+
+func IsCanMoveLeft() bool {
+	if curX+curOriX-2 > 0 {
+		if curY > 0 {
+			y := curY + curOriY - 1
+			x := ((curX + curOriX) / 2) - 1
+			for i := 0; i < curTetro.height; i++ {
+				for j := 0; j < curTetro.width; j++ {
+					sum := curTetro.con[i][j] + board[i+y][x+j]
+					if sum > 1 {
+						return false
+					}
+				}
+			}
+		}
+		return true
+	}
+	return false
 }
 
 func MoveTetrominoDown() {
-	tetroH := curTetro.height + curOriY
-	next := curY + 1
 	if isPressedSpace {
-		for next+tetroH < 20 {
-			next++
+		for IsCanMoveDown(curY) {
+			curY++
 		}
-		curY = next
 		isPressedSpace = false
-	} else if next+tetroH < 21 {
-		curY = next
-	}
-
-	if next+tetroH == 20 {
+		isTetroDown = true
+	} else if IsCanMoveDown(curY) {
+		curY++
+	} else {
 		isTetroDown = true
 	}
 }
@@ -273,6 +389,24 @@ func TetrominoRotateCounterCLockWise() {
 	curTetro = nextTetro
 }
 
+func PrintPrediction(win *Window) {
+	if oldPredY > 0 {
+		for ty, con := range oldTetro.con {
+			for tx, s := range con {
+				if s > 0 {
+					win.MovePrint(oldPredY+oldOriY+ty, oldX+oldOriX+tx*2, "  ")
+				}
+			}
+		}
+	}
+	y := curY
+	for IsCanMoveDown(y) {
+		y++
+	}
+	oldPredY = y
+	printTetromino(win, curTetro, y+curOriY, curOriX+curX, "◤◢", 10)
+}
+
 func headerPrint(win *Window, y int, x int) {
 	defer win.Refresh()
 	ascii := [][]string{
@@ -295,14 +429,20 @@ func headerPrint(win *Window, y int, x int) {
 	}
 }
 
-func printTetromino(win *Window, tetro Tetromino, y int, x int) {
+func printTetromino(win *Window, tetro Tetromino, y int, x int, args ...interface{}) {
 	defer win.Refresh()
+	charSt := "  "
+	plusPair := 0
+	if len(args) > 0 {
+		charSt = args[0].(string)
+		plusPair = args[1].(int)
+	}
 	for ty, con := range tetro.con {
 		for tx, s := range con {
-			if s > 0 {
-				win.ColorOn(tetro.pair)
-				win.MovePrint(y+ty, x+tx*2, "  ")
-				win.ColorOff(tetro.pair)
+			if s > 0 && y+ty >= 1 {
+				win.ColorOn(tetro.pair + int16(plusPair))
+				win.MovePrint(y+ty, x+tx*2, charSt)
+				win.ColorOff(tetro.pair + int16(plusPair))
 			}
 		}
 	}
@@ -313,49 +453,49 @@ func createTetromino() Tetromino {
 	switch rand.Intn(7) {
 	case 0:
 		t.con, t.pair = [][]int{
-			{1, 2, 1, 1},
+			{1, 1, 1, 1},
 		}, 1
 		t.height, t.width = 1, 4
 		t.rotate = false
 	case 1:
 		t.con, t.pair = [][]int{
 			{1, 0, 0},
-			{1, 2, 1},
+			{1, 1, 1},
 		}, 2
 		t.height, t.width = 2, 3
 		t.rotate = true
 	case 2:
 		t.con, t.pair = [][]int{
 			{0, 0, 1},
-			{1, 2, 1},
+			{1, 1, 1},
 		}, 7
 		t.height, t.width = 2, 3
 		t.rotate = true
 	case 3:
 		t.con, t.pair = [][]int{
 			{1, 1},
-			{2, 1},
+			{1, 1},
 		}, 3
 		t.height, t.width = 2, 2
 		t.rotate = false
 	case 4:
 		t.con, t.pair = [][]int{
 			{0, 1, 1},
-			{1, 2, 0},
+			{1, 1, 0},
 		}, 4
 		t.height, t.width = 2, 3
 		t.rotate = true
 	case 5:
 		t.con, t.pair = [][]int{
 			{0, 1, 0},
-			{1, 2, 1},
+			{1, 1, 1},
 		}, 5
 		t.height, t.width = 2, 3
 		t.rotate = true
 	case 6:
 		t.con, t.pair = [][]int{
 			{1, 1, 0},
-			{0, 2, 1},
+			{0, 1, 1},
 		}, 6
 		t.height, t.width = 2, 3
 		t.rotate = true
