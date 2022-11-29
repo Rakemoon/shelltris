@@ -11,19 +11,21 @@ import (
 
 type Tetromino struct {
 	con    [][]int
-	ori    []int
 	pair   int16
 	height int
 	width  int
+	rotate bool
 }
 
 var (
-	curY, curX int
-	oldY, oldX int
-	oriY, oriX int
-	curTetro   Tetromino
-	oldTetro   Tetromino
-	isEnd      bool
+	curY, curX       int
+	oldY, oldX       int
+	curOriY, curOriX int
+	oldOriY, oldOriX int
+	ori              int
+	curTetro         Tetromino
+	oldTetro         Tetromino
+	isEnd            bool
 
 	wg sync.WaitGroup
 )
@@ -55,9 +57,9 @@ func initConf(win *Window) {
 	win.Keypad(true)
 
 	curY, curX = 1, 1
-	oldY, oldX = 1, 1
+	ori = 1
 	curTetro = createTetromino()
-	oldTetro = curTetro
+	BackupTetris()
 	SetOriTetromino()
 }
 
@@ -111,11 +113,12 @@ func handleKeyboard(stdscr *Window, win *Window) {
 			MoveTetrominoDown()
 		case KEY_UP:
 			TetrominoRotateCLockWise()
-		case 529:
+		case 'z':
 			TetrominoRotateCounterCLockWise()
 		case 'c':
 			BackupTetris()
 			curTetro = createTetromino()
+			ori = 1
 			SetOriTetromino()
 		case 'r':
 			curY = 1
@@ -128,29 +131,29 @@ func UpdateTetris(win *Window) {
 	for ty, con := range oldTetro.con {
 		for tx, s := range con {
 			if s > 0 {
-				win.MovePrint(oldY+ty, oldX+tx*2, "  ")
+				win.MovePrint(oldY+oldOriY+ty, oldX+oldOriX+tx*2, "  ")
 			}
 		}
 	}
 	win.Refresh()
-	printTetromino(win, curTetro, curY+oriY, curX+oriX)
+	printTetromino(win, curTetro, curY+curOriY, curX+curOriX)
 }
 
 func BackupTetris() {
-	oldX, oldY, oldTetro = curX, curY, curTetro
+	oldX, oldY, oldOriX, oldOriY, oldTetro = curX, curY, curOriX, curOriY, curTetro
 }
 
 func MoveTetrominoLeft() {
 	BackupTetris()
 	next := curX - 2
-	if next+oriX > 0 {
+	if next+curOriX > 0 {
 		curX = next
 	}
 }
 
 func MoveTetrominoRight() {
 	BackupTetris()
-	tetroW := curTetro.width*2 + oriX
+	tetroW := curTetro.width*2 + curOriX
 	next := curX + 2
 	if next+tetroW < 22 {
 		curX = next
@@ -159,7 +162,7 @@ func MoveTetrominoRight() {
 
 func MoveTetrominoDown() {
 	BackupTetris()
-	tetroH := curTetro.height + oriY
+	tetroH := curTetro.height + curOriY
 	next := curY + 1
 	if next+tetroH < 21 {
 		curY = next
@@ -167,30 +170,36 @@ func MoveTetrominoDown() {
 }
 
 func SetOriTetromino() {
-	oriLen := len(curTetro.ori)
-	if oriLen > 0 {
-		switch curTetro.ori[0] {
-		case 1:
-			oriY = 0
-			oriX = 0
-		case 2:
-			oriY = 0
-			oriX = 2
-		case 3:
-			oriX = 0
-			oriY = 1
-		case 4:
-			oriX = 0
-			oriY = 0
-		}
-	} else {
-		oriY = 0
-		oriX = 0
+	if ori < 1 {
+		ori = 4
 	}
+	if ori > 4 {
+		ori = 1
+	}
+	curOriY, curOriX = getPosOri(ori)
+}
+
+func getPosOri(val int) (int, int) {
+	var oriY, oriX int
+	switch val {
+	case 1:
+		oriY, oriX = 0, 0
+	case 2:
+		oriY, oriX = 0, 2
+	case 3:
+		oriY, oriX = 1, 0
+	case 4:
+		oriY, oriX = 0, 0
+	}
+	return oriY, oriX
 }
 
 func TetrominoRotateCLockWise() {
 	BackupTetris()
+	nextOriY, nextOriX := getPosOri(ori + 1)
+	if oldX+nextOriX < 1 || oldX+nextOriX+oldTetro.height*2 > 21 || oldTetro.width+nextOriY+oldY > 20 {
+		return
+	}
 	curTetro.con = make([][]int, oldTetro.width)
 	for w := 0; w < oldTetro.width; w++ {
 		curTetro.con[w] = make([]int, oldTetro.height)
@@ -203,8 +212,8 @@ func TetrominoRotateCLockWise() {
 			con[i], con[j] = con[j], con[i]
 		}
 	}
-	if len(curTetro.ori) > 0 {
-		curTetro.ori = append(curTetro.ori[1:], curTetro.ori[:1]...)
+	if curTetro.rotate {
+		ori++
 		SetOriTetromino()
 	}
 	curTetro.height, curTetro.width = oldTetro.width, oldTetro.height
@@ -212,6 +221,10 @@ func TetrominoRotateCLockWise() {
 
 func TetrominoRotateCounterCLockWise() {
 	BackupTetris()
+	nextOriY, nextOriX := getPosOri(ori - 1)
+	if oldX+nextOriX < 1 || oldX+nextOriX+oldTetro.height*2 > 21 || oldTetro.width+nextOriY+oldY > 20 {
+		return
+	}
 	curTetro.con = make([][]int, oldTetro.width)
 	for w := 0; w < oldTetro.width; w++ {
 		curTetro.con[w] = make([]int, oldTetro.height)
@@ -222,8 +235,8 @@ func TetrominoRotateCounterCLockWise() {
 	for i, j := 0, oldTetro.width-1; i < j; i, j = i+1, j-1 {
 		curTetro.con[i], curTetro.con[j] = curTetro.con[j], curTetro.con[i]
 	}
-	if len(curTetro.ori) > 0 {
-		curTetro.ori = append(curTetro.ori[3:], curTetro.ori[0:3]...)
+	if curTetro.rotate {
+		ori--
 		SetOriTetromino()
 	}
 	curTetro.height, curTetro.width = oldTetro.width, oldTetro.height
@@ -253,8 +266,6 @@ func headerPrint(win *Window, y int, x int) {
 
 func printTetromino(win *Window, tetro Tetromino, y int, x int) {
 	defer win.Refresh()
-	win.Clear()
-	win.Box(0, 0)
 	for ty, con := range tetro.con {
 		for tx, s := range con {
 			if s > 0 {
@@ -274,49 +285,49 @@ func createTetromino() Tetromino {
 			{1, 2, 1, 1},
 		}, 1
 		t.height, t.width = 1, 4
-		t.ori = []int{}
+		t.rotate = false
 	case 1:
 		t.con, t.pair = [][]int{
 			{1, 0, 0},
 			{1, 2, 1},
 		}, 2
 		t.height, t.width = 2, 3
-		t.ori = []int{1, 2, 3, 4}
+		t.rotate = true
 	case 2:
 		t.con, t.pair = [][]int{
 			{0, 0, 1},
 			{1, 2, 1},
 		}, 7
 		t.height, t.width = 2, 3
-		t.ori = []int{1, 2, 3, 4}
+		t.rotate = true
 	case 3:
 		t.con, t.pair = [][]int{
 			{1, 1},
 			{2, 1},
 		}, 3
 		t.height, t.width = 2, 2
-		t.ori = []int{}
+		t.rotate = false
 	case 4:
 		t.con, t.pair = [][]int{
 			{0, 1, 1},
 			{1, 2, 0},
 		}, 4
 		t.height, t.width = 2, 3
-		t.ori = []int{1, 2, 3, 4}
+		t.rotate = true
 	case 5:
 		t.con, t.pair = [][]int{
 			{0, 1, 0},
 			{1, 2, 1},
 		}, 5
 		t.height, t.width = 2, 3
-		t.ori = []int{1, 2, 3, 4}
+		t.rotate = true
 	case 6:
 		t.con, t.pair = [][]int{
 			{1, 1, 0},
 			{0, 2, 1},
 		}, 6
 		t.height, t.width = 2, 3
-		t.ori = []int{1, 2, 3, 4}
+		t.rotate = true
 	}
 
 	return t
