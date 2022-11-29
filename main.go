@@ -17,8 +17,13 @@ type Tetromino struct {
 	rotate bool
 }
 
+type BoardProp struct {
+	val  int
+	pair int16
+}
+
 var (
-	board            [][]int
+	board            [][]BoardProp
 	curTetro         Tetromino
 	oldTetro         Tetromino
 	curY, curX       int
@@ -68,9 +73,9 @@ func initConf(win *Window) {
 }
 
 func InitBoard() {
-	board = make([][]int, 20)
+	board = make([][]BoardProp, 20)
 	for i := 0; i < 20; i++ {
-		board[i] = make([]int, 10)
+		board[i] = make([]BoardProp, 10)
 	}
 }
 
@@ -192,14 +197,45 @@ func UpdateTetris(win *Window) {
 						isEnd = true
 						break storeToBoard
 					}
-					board[ty+y][tx+x] += s
+					board[ty+y][tx+x].val += s
+					board[ty+y][tx+x].pair = curTetro.pair
 				}
 			}
 		}
+		CheckAndEliminateRow(win)
 		InitTetromino(curX)
 		PrintPrediction(win)
 		printTetromino(win, curTetro, curY+curOriY, curX+curOriX)
 	}
+}
+
+func CheckAndEliminateRow(win *Window) {
+	nextBoard := make([][]BoardProp, 0)
+	for _, row := range board {
+		var count int
+		for _, col := range row {
+			count += col.val
+		}
+		if count < 10 {
+			nextBoard = append(nextBoard, row)
+		} else {
+			mkBoard := make([][]BoardProp, 1)
+			mkBoard[0] = make([]BoardProp, 10)
+			nextBoard = append(mkBoard, nextBoard...)
+		}
+	}
+	for y, row := range nextBoard {
+		for x, col := range row {
+			if col.pair > 0 {
+				win.ColorOn(col.pair)
+			}
+			win.MovePrint(1+y, 1+x*2, "  ")
+			if col.pair > 0 {
+				win.ColorOff(col.pair)
+			}
+		}
+	}
+	board = nextBoard
 }
 
 func BackupTetris() {
@@ -248,7 +284,7 @@ func IsCanMoveDown(yS int) bool {
 			x := (curX + curOriX) / 2
 			for i := 0; i < curTetro.height; i++ {
 				for j := 0; j < curTetro.width; j++ {
-					sum := curTetro.con[i][j] + board[i+y][x+j]
+					sum := curTetro.con[i][j] + board[i+y][x+j].val
 					if sum > 1 {
 						return false
 					}
@@ -267,7 +303,7 @@ func IsCanMoveRight() bool {
 			x := ((curX + curOriX) / 2) + 1
 			for i := 0; i < curTetro.height; i++ {
 				for j := 0; j < curTetro.width; j++ {
-					sum := curTetro.con[i][j] + board[i+y][x+j]
+					sum := curTetro.con[i][j] + board[i+y][x+j].val
 					if sum > 1 {
 						return false
 					}
@@ -286,7 +322,7 @@ func IsCanMoveLeft() bool {
 			x := ((curX + curOriX) / 2) - 1
 			for i := 0; i < curTetro.height; i++ {
 				for j := 0; j < curTetro.width; j++ {
-					sum := curTetro.con[i][j] + board[i+y][x+j]
+					sum := curTetro.con[i][j] + board[i+y][x+j].val
 					if sum > 1 {
 						return false
 					}
