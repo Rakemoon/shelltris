@@ -26,6 +26,7 @@ var (
 	curTetro         Tetromino
 	oldTetro         Tetromino
 	isEnd            bool
+	isTetroDown      bool
 
 	wg sync.WaitGroup
 )
@@ -56,11 +57,17 @@ func initConf(win *Window) {
 
 	win.Keypad(true)
 
-	curY, curX = 1, 1
-	ori = 1
+	InitTetromino()
+}
+
+func InitTetromino() {
 	curTetro = createTetromino()
-	BackupTetris()
-	SetOriTetromino()
+	oldX, oldY = 7, 1
+	curX, curY = 7, 1
+	ori = 1
+	curOriX, curOriY = 0, 0
+	oldOriX, oldOriY = 0, 0
+	isTetroDown = false
 }
 
 func main() {
@@ -117,13 +124,6 @@ func handleKeyboard(stdscr *Window, win *Window) {
 			TetrominoRotateCounterCLockWise()
 		case ' ':
 			MoveTetrominoDown(true)
-		case 'c':
-			BackupTetris()
-			curTetro = createTetromino()
-			ori = 1
-			SetOriTetromino()
-		case 'r':
-			curY = 1
 		}
 		UpdateTetris(win)
 	}
@@ -139,6 +139,10 @@ func UpdateTetris(win *Window) {
 	}
 	win.Refresh()
 	printTetromino(win, curTetro, curY+curOriY, curX+curOriX)
+	if isTetroDown {
+		InitTetromino()
+		printTetromino(win, curTetro, curY+curOriY, curX+curOriX)
+	}
 }
 
 func BackupTetris() {
@@ -166,13 +170,17 @@ func MoveTetrominoDown(forces ...bool) {
 	BackupTetris()
 	tetroH := curTetro.height + curOriY
 	next := curY + 1
-	if next+tetroH < 21 {
-		if len(forces) > 0 && forces[0] {
-			for next+tetroH < 20 {
-				next++
-			}
+	if len(forces) > 0 && forces[0] {
+		for next+tetroH < 20 {
+			next++
 		}
 		curY = next
+	} else if next+tetroH < 21 {
+		curY = next
+	}
+
+	if next+tetroH == 20 {
+		isTetroDown = true
 	}
 }
 
