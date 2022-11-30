@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"math"
 	"math/rand"
 	"sync"
 	"time"
@@ -26,6 +27,7 @@ var (
 	board            [][]BoardProp
 	curTetro         Tetromino
 	oldTetro         Tetromino
+	nextTetro        Tetromino
 	curY, curX       int
 	oldY, oldX       int
 	curOriY, curOriX int
@@ -38,6 +40,10 @@ var (
 	isPressedDown  bool
 
 	oldPredY int
+
+	lastMovement uint8
+	score        int
+	level        = 1
 
 	wg sync.WaitGroup
 )
@@ -80,7 +86,11 @@ func InitBoard() {
 }
 
 func InitTetromino(posX int) {
-	curTetro = createTetromino()
+	curTetro = nextTetro
+	if nextTetro.height < 1 {
+		curTetro = createTetromino()
+	}
+	nextTetro = createTetromino()
 	oldX, oldY = posX, 2-curTetro.height
 	curX, curY = posX, 2-curTetro.height
 	ori = 1
@@ -91,6 +101,58 @@ func InitTetromino(posX int) {
 
 	for curX+curOriX+curTetro.width*2 >= 22 {
 		curX -= 2
+	}
+
+	for curX+curOriX < 1 {
+		curX += 2
+	}
+}
+
+func InitializeLevel(stdscr *Window, win *Window) int {
+	val := 1
+	win.Box(0, 0)
+	win.MovePrint(0, 7, "Chose Level!")
+	win.Refresh()
+	defer func() {
+		win.Erase()
+		win.Refresh()
+		win.Delete()
+	}()
+	for {
+		for i := 0; i < 6; i++ {
+			win.ColorOn(int16(i + 11))
+			if val-1 == i {
+				win.AttrOn(A_BOLD)
+				win.MovePrint(1+i, 8, "_")
+				win.MovePrint(1+i, 9, "LEVEL ", i+1)
+				win.MovePrint(1+i, 16, "_")
+				win.AttrOff(A_BOLD)
+			} else {
+				win.MovePrint(1+i, 8, " ")
+				win.MovePrint(1+i, 9, "LEVEL ", i+1)
+				win.MovePrint(1+i, 16, " ")
+			}
+			win.ColorOff(int16(i + 11))
+		}
+		win.Refresh()
+		c := stdscr.GetChar()
+		switch Key(c) {
+		case 'q':
+			val = 0
+			return val
+		case ' ':
+			return val
+		case KEY_UP:
+			val--
+		case KEY_DOWN:
+			val++
+		}
+		if val > 6 {
+			val = 1
+		}
+		if val < 1 {
+			val = 6
+		}
 	}
 }
 
@@ -103,36 +165,80 @@ func main() {
 
 	initConf(stdscr)
 
-	headerPrint(stdscr, 0, 0)
+	mY, mX := stdscr.MaxYX()
 
-	win, _ := NewWindow(22, 22, 6, 0)
+	mY, mX = (mY/2)-14, (mX/2)-22
+
+	headerPrint(stdscr, mY, mX)
+
+	winit, _ := NewWindow(8, 26, mY+8, mX+10)
+	winit2, _ := NewWindow(4, 26, mY+16, mX+10)
+	winit2.Box(0, 0)
+	winit2.AttrOn(A_BOLD)
+	winit2.MovePrint(1, 1, " USE ARROW KEYS TO MOVE")
+	winit2.MovePrint(2, 1, "   AND SPACE TO SELECT")
+	winit2.AttrOff(A_BOLD)
+	winit2.Refresh()
+	if level = InitializeLevel(stdscr, winit); level == 0 {
+		return
+	}
+	winit2.Erase()
+	winit2.Refresh()
+	winit2.Delete()
+
+	stdscr.Refresh()
+
+	win, _ := NewWindow(22, 22, mY+6, mX)
 	win.Box(0, 0)
 	win.Refresh()
 
-	UpdateTetris(win)
+	win2, _ := NewWindow(4, 22, mY+6, mX+23)
+	win2.Box(0, 0)
+	win2.Refresh()
+	PrintScore(win2)
+
+	win3, _ := NewWindow(11, 22, mY+17, mX+23)
+	win3.Box(0, 0)
+	win3.AttrOn(A_BOLD)
+	win3.MovePrint(0, 8, "CONTROL")
+	win3.MovePrintf(2, 4, "Left%10s", "←")
+	win3.MovePrintf(3, 4, "Right%9s", "→")
+	win3.MovePrintf(4, 4, "Down%10s", "↓")
+	win3.MovePrintf(5, 4, "Rotate%8s", "↑")
+	win3.MovePrintf(6, 4, "Rotate*%7s", "z")
+	win3.MovePrintf(7, 4, "Drop%10s", "space")
+	win3.MovePrintf(8, 4, "Quit%10s", "q")
+	win3.AttrOff(A_BOLD)
+	win3.Refresh()
+
+	win4, _ := NewWindow(7, 22, mY+10, mX+23)
+	PrintNextTetromino(win4)
+
+	UpdateTetris(win, win2, win4)
+
+	go GoDownPLEASE(win, win2, win4)
 
 	wg.Add(1)
-	go handleKeyboard(stdscr, win)
-
-	go GoDownPLEASE(win)
+	go handleKeyboard(stdscr, win, win2, win4)
 
 	wg.Wait()
 }
 
-func GoDownPLEASE(win *Window) {
+func GoDownPLEASE(win *Window, win2 *Window, win3 *Window) {
 	for !isEnd {
-		time.Sleep(time.Second)
+		lastMovement = 0
+		time.Sleep(time.Second / time.Duration(3+level))
 		if isPressedDown {
 			isPressedDown = false
 		} else {
 			BackupTetris()
 			MoveTetrominoDown()
-			UpdateTetris(win)
+			UpdateTetris(win, win2, win3)
 		}
 	}
 }
 
-func handleKeyboard(stdscr *Window, win *Window) {
+func handleKeyboard(stdscr *Window, win *Window, win2 *Window, win3 *Window) {
 	defer wg.Done()
 	for !isEnd {
 		stdscr.Refresh()
@@ -147,23 +253,29 @@ func handleKeyboard(stdscr *Window, win *Window) {
 			if moved := MoveTetrominoLeft(); !moved {
 				continue
 			}
+			lastMovement = 1
 		case KEY_RIGHT:
 			if moved := MoveTetrominoRight(); !moved {
 				continue
 			}
+			lastMovement = 2
 		case KEY_DOWN:
 			isPressedDown = true
 			MoveTetrominoDown()
+			lastMovement = 3
 		case KEY_UP:
 			TetrominoRotateCLockWise()
+			lastMovement = 4
 		case 'z':
 			TetrominoRotateCounterCLockWise()
+			lastMovement = 5
 		case ' ':
 			isPressedSpace = true
 			isPressedDown = true
 			MoveTetrominoDown()
+			lastMovement = 6
 		}
-		UpdateTetris(win)
+		UpdateTetris(win, win2, win3)
 		if isEnd {
 			stdscr.ColorOn(16)
 			stdscr.MovePrint(30, 0, "GAME OVER")
@@ -172,7 +284,7 @@ func handleKeyboard(stdscr *Window, win *Window) {
 	}
 }
 
-func UpdateTetris(win *Window) {
+func UpdateTetris(win *Window, win2 *Window, win3 *Window) {
 	if isEnd {
 		return
 	}
@@ -202,15 +314,32 @@ func UpdateTetris(win *Window) {
 				}
 			}
 		}
-		CheckAndEliminateRow(win)
+		CheckAndEliminateRow(win, win2)
 		InitTetromino(curX)
-		PrintPrediction(win)
+		PrintNextTetromino(win3)
+		//PrintPrediction(win)
 		printTetromino(win, curTetro, curY+curOriY, curX+curOriX)
+	}
+	for _, s := range board[0] {
+		if s.val > 0 {
+			isEnd = true
+		}
 	}
 }
 
-func CheckAndEliminateRow(win *Window) {
+func PrintNextTetromino(win *Window) {
+	win.Erase()
+	win.Box(0, 0)
+	win.AttrOn(A_BOLD)
+	win.MovePrint(0, 9, "Next")
+	win.AttrOff(A_BOLD)
+	win.Refresh()
+	printTetromino(win, nextTetro, 4-nextTetro.height, 11-nextTetro.width)
+}
+
+func CheckAndEliminateRow(win *Window, win2 *Window) {
 	nextBoard := make([][]BoardProp, 0)
+	eliminated := 0
 	for _, row := range board {
 		var count int
 		for _, col := range row {
@@ -219,23 +348,53 @@ func CheckAndEliminateRow(win *Window) {
 		if count < 10 {
 			nextBoard = append(nextBoard, row)
 		} else {
-			mkBoard := make([][]BoardProp, 1)
-			mkBoard[0] = make([]BoardProp, 10)
-			nextBoard = append(mkBoard, nextBoard...)
+			eliminated++
 		}
 	}
-	for y, row := range nextBoard {
-		for x, col := range row {
-			if col.pair > 0 {
-				win.ColorOn(col.pair)
-			}
-			win.MovePrint(1+y, 1+x*2, "  ")
-			if col.pair > 0 {
-				win.ColorOff(col.pair)
+	if eliminated > 0 {
+		nNextBoard := make([][]BoardProp, eliminated)
+		for i := 0; i < eliminated; i++ {
+			nNextBoard[i] = make([]BoardProp, 10)
+		}
+		nextBoard = append(nNextBoard, nextBoard...)
+		for y, row := range nextBoard {
+			for x, col := range row {
+				if col.pair > 0 {
+					win.ColorOn(col.pair)
+				}
+				win.MovePrint(1+y, 1+x*2, "  ")
+				if col.pair > 0 {
+					win.ColorOff(col.pair)
+				}
 			}
 		}
+		CalculateScore(eliminated)
+		PrintScore(win2)
 	}
 	board = nextBoard
+}
+
+func CalculateScore(eliminated int) {
+	incr := level
+	if lastMovement == 4 || lastMovement == 5 {
+		incr += 2
+	}
+	incr += int(math.Ceil(float64(eliminated+1) / 2))
+	score += 22 * incr
+}
+
+func PrintScore(win *Window) {
+	win.AttrOn(A_BOLD)
+	win.MovePrint(1, 1, "Score ")
+	win.MovePrint(2, 1, "Level ")
+	win.ColorOn(14)
+	win.MovePrintf(1, 7, "%14d", score)
+	win.ColorOff(14)
+	win.ColorOn(12)
+	win.MovePrintf(2, 7, "%14d", level)
+	win.ColorOff(12)
+	win.AttrOff(A_BOLD)
+	win.Refresh()
 }
 
 func BackupTetris() {
@@ -257,25 +416,6 @@ func MoveTetrominoLeft() bool {
 	}
 	return false
 }
-
-/*func MoveTetrominoLeft() bool {
-	next := curX - 2
-	if next+curOriX > 0 {
-		curX = next
-		return true
-	}
-	return false
-}
-
-func MoveTetrominoRight() bool {
-	tetroW := curTetro.width*2 + curOriX
-	next := curX + 2
-	if next+tetroW < 22 {
-		curX = next
-		return true
-	}
-	return false
-}*/
 
 func IsCanMoveDown(yS int) bool {
 	if yS+curTetro.height+curOriY+1 < 22 {
