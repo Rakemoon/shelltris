@@ -109,9 +109,52 @@ func InitTetromino(posX int) {
 }
 
 func InitializeLevel(stdscr *Window, win *Window) int {
+	artNumber := [][][]uint8{
+		{
+			{0, 1, 0},
+			{0, 1, 0},
+			{0, 1, 0},
+			{0, 1, 0},
+			{0, 1, 0},
+		},
+		{
+			{1, 1, 1},
+			{0, 0, 1},
+			{1, 1, 1},
+			{1, 0, 0},
+			{1, 1, 1},
+		},
+		{
+			{1, 1, 1},
+			{0, 0, 1},
+			{1, 1, 1},
+			{0, 0, 1},
+			{1, 1, 1},
+		},
+		{
+			{1, 0, 1},
+			{1, 0, 1},
+			{1, 1, 1},
+			{0, 0, 1},
+			{0, 0, 1},
+		},
+		{
+			{1, 1, 1},
+			{1, 0, 0},
+			{1, 1, 1},
+			{0, 0, 1},
+			{1, 1, 1},
+		},
+		{
+			{1, 1, 1},
+			{1, 0, 0},
+			{1, 1, 1},
+			{1, 0, 1},
+			{1, 1, 1},
+		},
+	}
 	val := 1
 	win.Box(0, 0)
-	win.MovePrint(0, 7, "Chose Level!")
 	win.Refresh()
 	defer func() {
 		win.Erase()
@@ -119,21 +162,23 @@ func InitializeLevel(stdscr *Window, win *Window) int {
 		win.Delete()
 	}()
 	for {
-		for i := 0; i < 6; i++ {
-			win.ColorOn(int16(i + 11))
-			if val-1 == i {
-				win.AttrOn(A_BOLD)
-				win.MovePrint(1+i, 8, "_")
-				win.MovePrint(1+i, 9, "LEVEL ", i+1)
-				win.MovePrint(1+i, 16, "_")
-				win.AttrOff(A_BOLD)
-			} else {
-				win.MovePrint(1+i, 8, " ")
-				win.MovePrint(1+i, 9, "LEVEL ", i+1)
-				win.MovePrint(1+i, 16, " ")
+		artNum := artNumber[val-1]
+		win.Erase()
+		win.Box(0, 0)
+		win.AttrOn(A_BOLD)
+		win.MovePrint(0, 7, "Chose Level!")
+		win.AttrOff(A_BOLD)
+		win.Refresh()
+
+		win.ColorOn(int16(val))
+		for y, row := range artNum {
+			for x, col := range row {
+				if col > 0 {
+					win.MovePrint(y+2, 10+x*2, "  ")
+				}
 			}
-			win.ColorOff(int16(i + 11))
 		}
+		win.ColorOff(int16(val))
 		win.Refresh()
 		c := stdscr.GetChar()
 		switch Key(c) {
@@ -143,9 +188,13 @@ func InitializeLevel(stdscr *Window, win *Window) int {
 		case ' ':
 			return val
 		case KEY_UP:
-			val--
-		case KEY_DOWN:
 			val++
+		case KEY_RIGHT:
+			val++
+		case KEY_DOWN:
+			val--
+		case KEY_LEFT:
+			val--
 		}
 		if val > 6 {
 			val = 1
@@ -171,8 +220,8 @@ func main() {
 
 	headerPrint(stdscr, mY, mX)
 
-	winit, _ := NewWindow(8, 26, mY+8, mX+10)
-	winit2, _ := NewWindow(4, 26, mY+16, mX+10)
+	winit, _ := NewWindow(9, 26, mY+8, mX+10)
+	winit2, _ := NewWindow(4, 26, mY+17, mX+10)
 	winit2.Box(0, 0)
 	winit2.AttrOn(A_BOLD)
 	winit2.MovePrint(1, 1, " USE ARROW KEYS TO MOVE")
