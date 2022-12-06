@@ -2,6 +2,49 @@ package main
 
 import (
 	"log"
+
+	"github.com/gdamore/tcell/v2"
+)
+
+func main() {
+	scr, error := tcell.NewScreen()
+	if error != nil {
+		log.Fatal(error)
+	}
+	if error = scr.Init(); error != nil {
+		log.Fatal(error)
+	}
+	quit := func() {
+		isPanic := recover()
+		scr.Fini()
+		if isPanic != nil {
+			panic(isPanic)
+		}
+	}
+	defer quit()
+
+	initStyle()
+
+	scr.Clear()
+	printHeader(scr, 1, 1)
+	scr.Show()
+	for {
+		event := scr.PollEvent()
+
+		switch event := event.(type) {
+		case *tcell.EventKey:
+			if event.Rune() == 'q' {
+				return
+			}
+		}
+	}
+}
+
+/*
+package main
+
+import (
+	"log"
 	"math"
 	"math/rand"
 	"sync"
@@ -51,6 +94,7 @@ var (
 func initConf(win *Window) {
 	rand.Seed(time.Now().UnixNano())
 
+
 	StartColor()
 	UseDefaultColors()
 	Cursor(0)
@@ -84,6 +128,7 @@ func InitBoard() {
 		board[i] = make([]BoardProp, 10)
 	}
 }
+
 
 func InitTetromino(posX int) {
 	curTetro = nextTetro
@@ -728,3 +773,5 @@ func createTetromino() Tetromino {
 
 	return t
 }
+
+*/
