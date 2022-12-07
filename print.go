@@ -24,3 +24,20 @@ func printHeader(scr tcell.Screen, x, y int) {
 		}
 	}
 }
+
+func printTetris(scr tcell.Screen) {
+	width, height := scr.Size()
+	scr.Fill(0, DEF_SF)
+
+	printHeader(scr, (width-45)/2, (height-6)/2)
+}
+
+func printTetrisPlease(scr tcell.Screen) {
+	printTetris(scr)
+	scr.Show()
+}
+
+func printTetrisNow(scr tcell.Screen) {
+	printTetris(scr)
+	scr.Sync()
+}

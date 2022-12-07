@@ -6,6 +6,7 @@ var (
 	DEF_SF, BLUE_SF, CYAN_SF, YELLOW_SF, GREEN_SF, MAGENTA_SF, RED_SF, WHITE_SF tcell.Style
 )
 
+// Initialize primary style
 func initStyle() {
 	DEF_SF = tcell.StyleDefault.Background(tcell.ColorReset).Foreground(tcell.ColorReset)
 	BLUE_SF = tcell.StyleDefault.Background(tcell.ColorReset).Foreground(tcell.ColorBlue)
@@ -17,6 +18,10 @@ func initStyle() {
 	WHITE_SF = tcell.StyleDefault.Background(tcell.ColorReset).Foreground(tcell.ColorWhite)
 }
 
+/*
+DEF_SF, BLUE_SF, CYAN_SF, YELLOW_SF, GREEN_SF, MAGENTA_SF, RED_SF, WHITE_SF
+Return these style from 0 - 7
+*/
 func getStyleByInt(index int) tcell.Style {
 	styleArray := []tcell.Style{DEF_SF, BLUE_SF, CYAN_SF, YELLOW_SF, GREEN_SF, MAGENTA_SF, RED_SF, WHITE_SF}
 	if index > 7 {

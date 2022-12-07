@@ -6,6 +6,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
+// you know its like go please! and then magicly program run
 func main() {
 	scr, error := tcell.NewScreen()
 	if error != nil {
@@ -25,13 +26,14 @@ func main() {
 
 	initStyle()
 
-	scr.Clear()
-	printHeader(scr, 1, 1)
-	scr.Show()
+	printTetrisPlease(scr)
+
 	for {
 		event := scr.PollEvent()
 
 		switch event := event.(type) {
+		case *tcell.EventResize:
+			printTetrisNow(scr)
 		case *tcell.EventKey:
 			if event.Rune() == 'q' {
 				return
