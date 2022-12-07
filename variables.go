@@ -4,6 +4,8 @@ import "github.com/gdamore/tcell/v2"
 
 var (
 	DEF_SF, BLUE_SF, CYAN_SF, YELLOW_SF, GREEN_SF, MAGENTA_SF, RED_SF, WHITE_SF tcell.Style
+
+	LEVEL, HEIGHT int
 )
 
 // Initialize primary style

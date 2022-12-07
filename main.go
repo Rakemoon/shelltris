@@ -26,14 +26,16 @@ func main() {
 
 	initStyle()
 
-	printTetrisPlease(scr)
+	printTetris(scr)
+	scr.Show()
 
 	for {
 		event := scr.PollEvent()
 
 		switch event := event.(type) {
 		case *tcell.EventResize:
-			printTetrisNow(scr)
+			printTetris(scr)
+			scr.Sync()
 		case *tcell.EventKey:
 			if event.Rune() == 'q' {
 				return

@@ -6,6 +6,9 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
+/*TETRIS PRINTING*/
+
+// Print TETRIS
 func printHeader(scr tcell.Screen, x, y int) {
 	ascii := [][]string{
 		{"████████╗", "███████╗", "████████╗", "██████╗ ", "██╗", "███████╗"},
@@ -25,6 +28,7 @@ func printHeader(scr tcell.Screen, x, y int) {
 	}
 }
 
+// Print the Tetris Session
 func printTetris(scr tcell.Screen) {
 	width, height := scr.Size()
 	scr.Fill(0, DEF_SF)
@@ -32,12 +36,20 @@ func printTetris(scr tcell.Screen) {
 	printHeader(scr, (width-45)/2, (height-6)/2)
 }
 
-func printTetrisPlease(scr tcell.Screen) {
-	printTetris(scr)
-	scr.Show()
-}
+/*UTILITY*/
 
-func printTetrisNow(scr tcell.Screen) {
-	printTetris(scr)
-	scr.Sync()
+// Print the text using string.
+func printText(scr tcell.Screen, x, y, width, height int, style tcell.Style, text string) {
+	cols, rows := x, y
+	for _, c := range []rune(text) {
+		scr.SetContent(cols, rows, c, nil, style)
+		cols++
+		if (cols - x) >= width {
+			rows++
+			cols = x
+		}
+		if (rows - y) >= height {
+			break
+		}
+	}
 }
