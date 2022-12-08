@@ -25,23 +25,11 @@ func main() {
 	defer quit()
 
 	initStyle()
+	bindTermSize(scr.Size())
 
-	printTetris(scr)
-	scr.Show()
+	drawInitScreen(scr, false)
 
-	for {
-		event := scr.PollEvent()
-
-		switch event := event.(type) {
-		case *tcell.EventResize:
-			printTetris(scr)
-			scr.Sync()
-		case *tcell.EventKey:
-			if event.Rune() == 'q' {
-				return
-			}
-		}
-	}
+	handleTermEvent(scr)
 }
 
 /*

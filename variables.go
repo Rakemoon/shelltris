@@ -2,10 +2,25 @@ package main
 
 import "github.com/gdamore/tcell/v2"
 
+const (
+	MAX_TETRIS_LEVEL  = 6
+	MAX_TETRIS_HEIGHT = 6
+	MIN_TETRIS_LEVEL  = 1
+	MIN_TETRIS_HEIGHT = 0
+)
+
 var (
 	DEF_SF, BLUE_SF, CYAN_SF, YELLOW_SF, GREEN_SF, MAGENTA_SF, RED_SF, WHITE_SF tcell.Style
 
-	LEVEL, HEIGHT int
+	is_end bool
+
+	is_initialization = true
+	is_select_level   = true
+
+	cur_level  = MIN_TETRIS_LEVEL
+	cur_height = MIN_TETRIS_HEIGHT
+
+	term_width, term_height int
 )
 
 // Initialize primary style
@@ -20,17 +35,15 @@ func initStyle() {
 	WHITE_SF = tcell.StyleDefault.Background(tcell.ColorReset).Foreground(tcell.ColorWhite)
 }
 
+func bindTermSize(width, height int) {
+	term_width, term_height = width, height
+}
+
 /*
 DEF_SF, BLUE_SF, CYAN_SF, YELLOW_SF, GREEN_SF, MAGENTA_SF, RED_SF, WHITE_SF
 Return these style from 0 - 7
 */
 func getStyleByInt(index int) tcell.Style {
-	styleArray := []tcell.Style{DEF_SF, BLUE_SF, CYAN_SF, YELLOW_SF, GREEN_SF, MAGENTA_SF, RED_SF, WHITE_SF}
-	if index > 7 {
-		index = 0
-	}
-	if index < 0 {
-		index = 7
-	}
+	styleArray := []tcell.Style{WHITE_SF, BLUE_SF, CYAN_SF, YELLOW_SF, GREEN_SF, MAGENTA_SF, RED_SF, DEF_SF}
 	return styleArray[index]
 }
