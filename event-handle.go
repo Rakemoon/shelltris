@@ -39,9 +39,10 @@ func onPressRune(scr tcell.Screen, event *tcell.EventKey, c rune) {
 			printTetrisBox(scr)
 			scr.Show()
 		} else if c == 'z' {
-			cur_tetro.rotateCounterClockWise()
-			printTetrisBox(scr)
-			scr.Show()
+			if rotateCounterClockWise() {
+				printTetrisBox(scr)
+				scr.Show()
+			}
 		}
 	}
 }
@@ -70,18 +71,17 @@ func onPressKey(scr tcell.Screen, event *tcell.EventKey, key tcell.Key) {
 		}
 	} else if !is_initialization && !is_term_too_small {
 		if key == tcell.KeyLeft || key == tcell.KeyRight {
-			if canMoveLeftRight(key == tcell.KeyRight) {
-				moveLeftRight(key == tcell.KeyRight)
+			if moveLeftRight(key == tcell.KeyRight) {
 				printTetrisBox(scr)
 				scr.Show()
 			}
 		} else if key == tcell.KeyUp {
-			cur_tetro.rotateClockWise()
-			printTetrisBox(scr)
-			scr.Show()
+			if rotateClockWise() {
+				printTetrisBox(scr)
+				scr.Show()
+			}
 		} else if key == tcell.KeyDown {
-			if canMoveDown() {
-				moveDown()
+			if moveDown() {
 				printTetrisBox(scr)
 				scr.Show()
 			}

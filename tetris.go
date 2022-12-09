@@ -28,37 +28,133 @@ func printTetrisBox(scr tcell.Screen) {
 }
 
 // right = true to move right, right = false to move left
-func canMoveLeftRight(right bool) bool {
-	next_X := cur_X - 2
-	oriX, _ := cur_tetro.getOriXY()
-	if right {
-		next_X = cur_X + 2
-	}
-
-	if next_X < oriX*-2 || next_X+oriX+cur_tetro.width*2 > 20 {
-		return false
-	}
-	return true
-}
-
-// right = true to move right, right = false to move left
-func moveLeftRight(right bool) {
+func moveLeftRight(right bool) bool {
 	next_X := cur_X - 2
 	if right {
 		next_X = cur_X + 2
 	}
-	cur_X = next_X
+
+	if isMoveAvailable(cur_tetro, cur_X, next_X, cur_Y) == 0 {
+		cur_X = next_X
+		return true
+	}
+	return false
 }
 
-func canMoveDown() bool {
+func moveDown() bool {
 	next_Y := cur_Y + 1
-	_, oriY := cur_tetro.getOriXY()
-	if next_Y+oriY+cur_tetro.height > 20 {
-		return false
+	if isMoveAvailable(cur_tetro, cur_X, cur_X, next_Y) == 0 {
+		cur_Y = next_Y
+		return true
 	}
-	return true
+	return false
 }
 
-func moveDown() {
-	cur_Y++
+func rotateClockWise() bool {
+	var success bool
+	nextTetro := cur_tetro.clone()
+	nextTetro.rotateClockWise()
+	nextX, nextY := cur_X, cur_Y
+	statMove := isMoveAvailable(nextTetro, cur_X, cur_X, cur_Y)
+	if statMove == 3 {
+		searchAvailableYMove(nextTetro, cur_X, cur_Y, &nextX, &nextY)
+		success = !(nextX == cur_X && nextY == cur_Y)
+	} else {
+		switch statMove {
+		case 0:
+			success = true
+		case 1:
+			searchAvailableRightMove(nextTetro, cur_X, cur_Y, &nextX, &nextY)
+			success = !(nextX == cur_X)
+		case 2:
+			searchAvailableLefttMove(nextTetro, cur_X, cur_Y, &nextX, &nextY)
+			success = !(nextX == cur_X)
+		}
+	}
+	if success {
+		cur_tetro = nextTetro
+		cur_X, cur_Y = nextX, nextY
+	}
+	return success
+}
+
+func rotateCounterClockWise() bool {
+	var success bool
+	nextTetro := cur_tetro.clone()
+	nextTetro.rotateCounterClockWise()
+	nextX, nextY := cur_X, cur_Y
+	statMove := isMoveAvailable(nextTetro, cur_X, cur_X, cur_Y)
+	if statMove == 3 {
+		searchAvailableYMove(nextTetro, cur_X, cur_Y, &nextX, &nextY)
+		success = !(nextX == cur_X && nextY == cur_Y)
+	} else {
+		switch statMove {
+		case 0:
+			success = true
+		case 1:
+			searchAvailableRightMove(nextTetro, cur_X, cur_Y, &nextX, &nextY)
+			success = !(nextX == cur_X)
+		case 2:
+			searchAvailableLefttMove(nextTetro, cur_X, cur_Y, &nextX, &nextY)
+			success = !(nextX == cur_X)
+		}
+	}
+	if success {
+		cur_tetro = nextTetro
+		cur_X, cur_Y = nextX, nextY
+	}
+	return success
+}
+
+/*UTILITY*/
+
+func searchAvailableYMove(tetro Tetromino, x, y int, nextX, nextY *int) {
+	if isMoveAvailable(tetro, x, *nextX+2, *nextY+1) == 0 {
+		*nextX += 2
+		*nextY++
+	} else if isMoveAvailable(tetro, x, *nextX-2, *nextY+2) == 0 {
+		*nextX -= 2
+		*nextY++
+	}
+}
+
+func searchAvailableRightMove(tetro Tetromino, x, y int, nextX, nextY *int) {
+	nX := *nextX
+	for {
+		statMove := isMoveAvailable(tetro, x, nX, *nextY)
+		if statMove != 1 {
+			if statMove == 0 {
+				*nextX = nX
+			}
+			break
+		}
+		nX += 2
+	}
+}
+
+func searchAvailableLefttMove(tetro Tetromino, x, y int, nextX, nextY *int) {
+	nX := *nextX
+	for {
+		statMove := isMoveAvailable(tetro, x, nX, *nextY)
+		if statMove != 2 {
+			if statMove == 0 {
+				*nextX = nX
+			}
+			break
+		}
+		nX -= 2
+	}
+}
+
+func isMoveAvailable(tetro Tetromino, x, nextX, nextY int) int {
+	oriX, oriY := tetro.getOriXY()
+
+	if nextX < oriX*-2 {
+		return 1
+	} else if nextX+oriX+tetro.width*2 > 20 {
+		return 2
+	} else if nextY+oriY+tetro.height > 20 {
+		return 3
+	}
+	return 0
 }
