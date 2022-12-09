@@ -24,7 +24,7 @@ func drawTetrisScreen(scr tcell.Screen, force bool) {
 func printTetrisBox(scr tcell.Screen) {
 	x, y := (term_width-45)/2, (term_height-28)/2
 	printBox(scr, x, y+6, 22, 22, DEF_SF, true)
-	cur_tetro.print(scr, x+1+cur_X, y+6+1+cur_Y, x+1, y+6+1, x+20, y+6+21, true)
+	cur_tetro.print(scr, x+1+cur_X, y+6+1+cur_Y, y+6+1, true)
 }
 
 // right = true to move right, right = false to move left

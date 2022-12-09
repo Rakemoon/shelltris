@@ -88,7 +88,7 @@ func (tetro *Tetromino) getOriXY() (int, int) {
 	return 0, 0
 }
 
-func (tetro *Tetromino) print(scr tcell.Screen, x, y, minX, minY, maxX, maxY int, withOri bool) {
+func (tetro *Tetromino) print(scr tcell.Screen, x, y, minY int, withOri bool) {
 	oriX, oriY := 0, 0
 	if withOri {
 		oriX, oriY = tetro.getOriXY()
@@ -98,7 +98,7 @@ func (tetro *Tetromino) print(scr tcell.Screen, x, y, minX, minY, maxX, maxY int
 		posY := y + ty + oriY
 		for tx, c := range con {
 			posX := x + (tx+oriX)*2
-			if c > 0 && posX >= minX && posX < maxX && posY >= minY && posY < maxY {
+			if c > 0 && posY >= minY {
 				printText(scr, posX, posY, 2, 1, style, "██")
 			}
 		}
