@@ -30,11 +30,12 @@ func printTetrisBox(scr tcell.Screen) {
 // right = true to move right, right = false to move left
 func canMoveLeftRight(right bool) bool {
 	next_X := cur_X - 2
+	oriX, _ := cur_tetro.getOriXY()
 	if right {
 		next_X = cur_X + 2
 	}
 
-	if next_X < 0 || next_X+cur_tetro.width*2 > 20 {
+	if next_X < oriX*-2 || next_X+oriX+cur_tetro.width*2 > 20 {
 		return false
 	}
 	return true
@@ -51,7 +52,8 @@ func moveLeftRight(right bool) {
 
 func canMoveDown() bool {
 	next_Y := cur_Y + 1
-	if next_Y+cur_tetro.height > 20 {
+	_, oriY := cur_tetro.getOriXY()
+	if next_Y+oriY+cur_tetro.height > 20 {
 		return false
 	}
 	return true

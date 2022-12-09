@@ -15,6 +15,7 @@ type Tetromino struct {
 }
 
 func (tetro *Tetromino) setRandom() {
+	tetro.ori = 0
 	switch rand.Intn(7) {
 	case 0:
 		tetro.con = [][]int{
@@ -27,7 +28,7 @@ func (tetro *Tetromino) setRandom() {
 			{1, 0, 0},
 			{1, 1, 1},
 		}
-		tetro.color = 1
+		tetro.color = 2
 		tetro.width, tetro.height = 3, 2
 	case 2:
 		tetro.con = [][]int{
@@ -68,14 +69,18 @@ func (tetro *Tetromino) setRandom() {
 }
 
 func (tetro *Tetromino) getOriXY() (int, int) {
-	if tetro.color == 4 {
+	if tetro.color == 3 {
 		return 0, 0
-	} else if tetro.color == 2 {
+	} else if tetro.color == 1 {
 		switch tetro.ori {
+		case 0:
+			return 0, 1
 		case 1:
 			return 2, 0
+		case 2:
+			return 0, 2
 		case 3:
-			return 2, 0
+			return 1, 0
 		}
 	} else {
 		switch tetro.ori {
@@ -103,4 +108,68 @@ func (tetro *Tetromino) print(scr tcell.Screen, x, y, minY int, withOri bool) {
 			}
 		}
 	}
+}
+
+func (tetro *Tetromino) clone() Tetromino {
+	var clonedTetro Tetromino
+	clonedTetro.con = make([][]int, tetro.height)
+	for ty := 0; ty < tetro.height; ty++ {
+		clonedTetro.con[ty] = make([]int, term_width)
+		for tx := 0; tx < tetro.width; tx++ {
+			clonedTetro.con[ty][tx] = tetro.con[ty][tx]
+		}
+	}
+	clonedTetro.color = tetro.color
+	clonedTetro.width = tetro.width
+	clonedTetro.height = tetro.height
+	clonedTetro.ori = tetro.ori
+	return clonedTetro
+}
+
+func (tetro *Tetromino) rotateClockWise() {
+	nextWidth, nextHeight := tetro.height, tetro.width
+	nextCon := make([][]int, nextHeight)
+	nextOri := tetro.ori + 1
+	if nextOri > 3 {
+		nextOri = 0
+	}
+	for ty := 0; ty < nextHeight; ty++ {
+		nextCon[ty] = make([]int, nextWidth)
+		for tx := 0; tx < nextWidth; tx++ {
+			nextCon[ty][tx] = tetro.con[tx][ty]
+		}
+	}
+	for _, con := range nextCon {
+		for i, j := 0, nextWidth-1; i < j; i, j = i+1, j-1 {
+			con[i], con[j] = con[j], con[i]
+		}
+	}
+	tetro.width = nextWidth
+	tetro.height = nextHeight
+	tetro.con = nextCon
+	tetro.ori = nextOri
+
+}
+
+func (tetro *Tetromino) rotateCounterClockWise() {
+	nextWidth, nextHeight := tetro.height, tetro.width
+	nextCon := make([][]int, nextHeight)
+	nextOri := tetro.ori - 1
+	if nextOri < 0 {
+		nextOri = 3
+	}
+	for ty := 0; ty < nextHeight; ty++ {
+		nextCon[ty] = make([]int, nextWidth)
+		for tx := 0; tx < nextWidth; tx++ {
+			nextCon[ty][tx] = tetro.con[tx][ty]
+		}
+	}
+	for i, j := 0, nextHeight-1; i < j; i, j = i+1, j-1 {
+		nextCon[i], nextCon[j] = nextCon[j], nextCon[i]
+	}
+	tetro.width = nextWidth
+	tetro.height = nextHeight
+	tetro.con = nextCon
+	tetro.ori = nextOri
+
 }
