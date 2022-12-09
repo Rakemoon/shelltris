@@ -1,0 +1,26 @@
+package main
+
+import "github.com/gdamore/tcell/v2"
+
+// 45x28
+func drawTetrisScreen(scr tcell.Screen, force bool) {
+	scr.Fill(0, DEF_SF)
+	if term_width < 45 || term_height < 28 {
+		printYourTermIsTooSmall(scr, 45, 28)
+	} else {
+		centerX, centerY := (term_width-45)/2, (term_height-28)/2
+		printHeader(scr, centerX, centerY)
+		printTetrisBox(scr)
+	}
+	if force {
+		scr.Sync()
+	} else {
+		scr.Show()
+	}
+}
+
+func printTetrisBox(scr tcell.Screen) {
+	x, y := (term_width-45)/2, (term_height-28)/2
+	printBox(scr, x, y+6, 22, 22, DEF_SF, true)
+	cur_tetro.print(scr, x+1+cur_X, y+6+1+cur_Y, x+1, y+6+1, x+20, y+6+21, true)
+}
