@@ -46,3 +46,15 @@ func moveLeftRight(right bool) {
 	}
 	cur_X = next_X
 }
+
+func canMoveDown() bool {
+	next_Y := cur_Y + 1
+	if next_Y+cur_tetro.height > 20 {
+		return false
+	}
+	return true
+}
+
+func moveDown() {
+	cur_Y++
+}

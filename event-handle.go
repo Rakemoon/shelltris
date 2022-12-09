@@ -69,9 +69,11 @@ func onPressKey(scr tcell.Screen, event *tcell.EventKey, key tcell.Key) {
 			printTetrisBox(scr)
 			scr.Show()
 		} else if key == tcell.KeyDown {
-			cur_Y++
-			printTetrisBox(scr)
-			scr.Show()
+			if canMoveDown() {
+				moveDown()
+				printTetrisBox(scr)
+				scr.Show()
+			}
 		}
 	}
 }
