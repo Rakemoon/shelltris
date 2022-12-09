@@ -2,6 +2,8 @@ package main
 
 import (
 	"log"
+	"math/rand"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 )
@@ -24,6 +26,7 @@ func main() {
 	}
 	defer quit()
 
+	rand.Seed(time.Now().UnixNano())
 	cur_tetro.setRandom()
 
 	initStyle()
