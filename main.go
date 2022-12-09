@@ -24,6 +24,8 @@ func main() {
 	}
 	defer quit()
 
+	cur_tetro.setRandom()
+
 	initStyle()
 	bindTermSize(scr.Size())
 

@@ -14,13 +14,16 @@ var (
 
 	is_end bool
 
+	term_width, term_height int
+
 	is_initialization = true
 	is_select_level   = true
 
 	cur_level  = MIN_TETRIS_LEVEL
 	cur_height = MIN_TETRIS_HEIGHT
 
-	term_width, term_height int
+	cur_X, cur_Y int
+	cur_tetro    Tetromino
 )
 
 // Initialize primary style
