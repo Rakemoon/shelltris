@@ -40,7 +40,7 @@ func onPressKey(scr tcell.Screen, event *tcell.EventKey, key tcell.Key) {
 		is_end = true
 		return
 	}
-	if is_initialization {
+	if is_initialization && !is_term_too_small {
 		if key == tcell.KeyTAB || key == tcell.KeyLeft || key == tcell.KeyRight {
 			switchInitChoose()
 			printBoxInitChoose(scr)
@@ -57,7 +57,7 @@ func onPressKey(scr tcell.Screen, event *tcell.EventKey, key tcell.Key) {
 			is_initialization = false
 			drawTetrisScreen(scr, false)
 		}
-	} else {
+	} else if !is_initialization && !is_term_too_small {
 		if key == tcell.KeyLeft || key == tcell.KeyRight {
 			if canMoveLeftRight(key == tcell.KeyRight) {
 				moveLeftRight(key == tcell.KeyRight)

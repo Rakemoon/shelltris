@@ -8,8 +8,10 @@ import (
 func drawInitScreen(scr tcell.Screen, force bool) {
 	scr.Fill(0, DEF_SF)
 	if term_width < 45 || term_height < 23 {
+		is_term_too_small = true
 		printYourTermIsTooSmall(scr, 45, 23)
 	} else {
+		is_term_too_small = false
 		centerX, centerY := (term_width-45)/2, (term_height-23)/2
 		printHeader(scr, centerX, centerY)
 		printBoxInitChoose(scr)

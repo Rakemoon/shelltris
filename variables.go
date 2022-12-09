@@ -15,6 +15,7 @@ var (
 	is_end bool
 
 	term_width, term_height int
+	is_term_too_small       bool
 
 	is_initialization = true
 	is_select_level   = true

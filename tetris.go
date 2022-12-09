@@ -6,8 +6,10 @@ import "github.com/gdamore/tcell/v2"
 func drawTetrisScreen(scr tcell.Screen, force bool) {
 	scr.Fill(0, DEF_SF)
 	if term_width < 45 || term_height < 28 {
+		is_term_too_small = true
 		printYourTermIsTooSmall(scr, 45, 28)
 	} else {
+		is_term_too_small = false
 		centerX, centerY := (term_width-45)/2, (term_height-28)/2
 		printHeader(scr, centerX, centerY)
 		printTetrisBox(scr)
