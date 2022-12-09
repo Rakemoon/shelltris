@@ -24,3 +24,25 @@ func printTetrisBox(scr tcell.Screen) {
 	printBox(scr, x, y+6, 22, 22, DEF_SF, true)
 	cur_tetro.print(scr, x+1+cur_X, y+6+1+cur_Y, x+1, y+6+1, x+20, y+6+21, true)
 }
+
+// right = true to move right, right = false to move left
+func canMoveLeftRight(right bool) bool {
+	next_X := cur_X - 2
+	if right {
+		next_X = cur_X + 2
+	}
+
+	if next_X < 0 || next_X+cur_tetro.width*2 > 20 {
+		return false
+	}
+	return true
+}
+
+// right = true to move right, right = false to move left
+func moveLeftRight(right bool) {
+	next_X := cur_X - 2
+	if right {
+		next_X = cur_X + 2
+	}
+	cur_X = next_X
+}
