@@ -151,7 +151,7 @@ func isMoveAvailable(tetro Tetromino, x, nextX, nextY int) int {
 
 	if nextX < oriX*-2 {
 		return 1
-	} else if nextX+oriX+tetro.width*2 > 20 {
+	} else if nextX+(oriX+tetro.width)*2 > 20 {
 		return 2
 	} else if nextY+oriY+tetro.height > 20 {
 		return 3
