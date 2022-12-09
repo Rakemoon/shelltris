@@ -1,8 +1,6 @@
 package main
 
-import (
-	"github.com/gdamore/tcell/v2"
-)
+import "github.com/gdamore/tcell/v2"
 
 // 45x23
 func drawInitScreen(scr tcell.Screen, force bool) {
@@ -71,4 +69,12 @@ func decInitChoose() {
 			cur_height = MAX_TETRIS_HEIGHT
 		}
 	}
+}
+
+func initTetrisSession(scr tcell.Screen) {
+	is_initialization = false
+	cur_board.fillBlank()
+	dropTetromino(-1)
+	drawTetrisScreen(scr, false)
+	go goDownPlease(scr)
 }

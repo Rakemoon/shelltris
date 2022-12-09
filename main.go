@@ -27,7 +27,6 @@ func main() {
 	defer quit()
 
 	rand.Seed(time.Now().UnixNano())
-	cur_tetro.setRandom()
 
 	initStyle()
 	bindTermSize(scr.Size())

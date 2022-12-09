@@ -93,7 +93,7 @@ func (tetro *Tetromino) getOriXY() (int, int) {
 	return 0, 0
 }
 
-func (tetro *Tetromino) print(scr tcell.Screen, x, y, minY int, withOri bool) {
+func (tetro *Tetromino) print(scr tcell.Screen, x, y, minY int, withOri bool, runet string) {
 	oriX, oriY := 0, 0
 	if withOri {
 		oriX, oriY = tetro.getOriXY()
@@ -104,7 +104,7 @@ func (tetro *Tetromino) print(scr tcell.Screen, x, y, minY int, withOri bool) {
 		for tx, c := range con {
 			posX := x + (tx+oriX)*2
 			if c > 0 && posY >= minY {
-				printText(scr, posX, posY, 2, 1, style, "██")
+				printText(scr, posX, posY, 2, 1, style, runet)
 			}
 		}
 	}

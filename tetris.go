@@ -24,7 +24,34 @@ func drawTetrisScreen(scr tcell.Screen, force bool) {
 func printTetrisBox(scr tcell.Screen) {
 	x, y := (term_width-45)/2, (term_height-28)/2
 	printBox(scr, x, y+6, 22, 22, DEF_SF, true)
-	cur_tetro.print(scr, x+1+cur_X, y+6+1+cur_Y, y+6+1, true)
+	cur_board.print(scr, x+1, y+6+1)
+	cur_tetro.print(scr, x+1+cur_X, y+6+1+predict_Y, y+6+1, true, "◤◢")
+	cur_tetro.print(scr, x+1+cur_X, y+6+1+cur_Y, y+6+1, true, "██")
+}
+
+func dropTetromino(x int) {
+	cur_tetro = Tetromino{}
+	cur_tetro.setRandom()
+	if x == -1 {
+		x = 4
+	}
+	if statMove := isMoveAvailable(cur_tetro, cur_X, x, cur_Y); statMove != 0 {
+		switch statMove {
+		case 1:
+			searchAvailableRightMove(cur_tetro, cur_X, &x, &cur_Y)
+		case 2:
+			searchAvailableLeftMove(cur_tetro, cur_X, &x, &cur_Y)
+		}
+	}
+	cur_X, cur_Y = x, -2
+	createPrediction()
+}
+
+func createPrediction() {
+	predict_Y = cur_Y
+	for isMoveAvailable(cur_tetro, cur_X, cur_X, predict_Y+1) == 0 {
+		predict_Y++
+	}
 }
 
 // right = true to move right, right = false to move left
@@ -36,6 +63,7 @@ func moveLeftRight(right bool) bool {
 
 	if isMoveAvailable(cur_tetro, cur_X, next_X, cur_Y) == 0 {
 		cur_X = next_X
+		createPrediction()
 		return true
 	}
 	return false
@@ -57,23 +85,24 @@ func rotateClockWise() bool {
 	nextX, nextY := cur_X, cur_Y
 	statMove := isMoveAvailable(nextTetro, cur_X, cur_X, cur_Y)
 	if statMove == 3 {
-		searchAvailableYMove(nextTetro, cur_X, cur_Y, &nextX, &nextY)
+		searchAvailableYMove(nextTetro, cur_X, &nextX, &nextY)
 		success = !(nextX == cur_X && nextY == cur_Y)
 	} else {
 		switch statMove {
 		case 0:
 			success = true
 		case 1:
-			searchAvailableRightMove(nextTetro, cur_X, cur_Y, &nextX, &nextY)
+			searchAvailableRightMove(nextTetro, cur_X, &nextX, &nextY)
 			success = !(nextX == cur_X)
 		case 2:
-			searchAvailableLefttMove(nextTetro, cur_X, cur_Y, &nextX, &nextY)
+			searchAvailableLeftMove(nextTetro, cur_X, &nextX, &nextY)
 			success = !(nextX == cur_X)
 		}
 	}
 	if success {
 		cur_tetro = nextTetro
 		cur_X, cur_Y = nextX, nextY
+		createPrediction()
 	}
 	return success
 }
@@ -85,30 +114,31 @@ func rotateCounterClockWise() bool {
 	nextX, nextY := cur_X, cur_Y
 	statMove := isMoveAvailable(nextTetro, cur_X, cur_X, cur_Y)
 	if statMove == 3 {
-		searchAvailableYMove(nextTetro, cur_X, cur_Y, &nextX, &nextY)
+		searchAvailableYMove(nextTetro, cur_X, &nextX, &nextY)
 		success = !(nextX == cur_X && nextY == cur_Y)
 	} else {
 		switch statMove {
 		case 0:
 			success = true
 		case 1:
-			searchAvailableRightMove(nextTetro, cur_X, cur_Y, &nextX, &nextY)
+			searchAvailableRightMove(nextTetro, cur_X, &nextX, &nextY)
 			success = !(nextX == cur_X)
 		case 2:
-			searchAvailableLefttMove(nextTetro, cur_X, cur_Y, &nextX, &nextY)
+			searchAvailableLeftMove(nextTetro, cur_X, &nextX, &nextY)
 			success = !(nextX == cur_X)
 		}
 	}
 	if success {
 		cur_tetro = nextTetro
 		cur_X, cur_Y = nextX, nextY
+		createPrediction()
 	}
 	return success
 }
 
 /*UTILITY*/
 
-func searchAvailableYMove(tetro Tetromino, x, y int, nextX, nextY *int) {
+func searchAvailableYMove(tetro Tetromino, x int, nextX, nextY *int) {
 	if isMoveAvailable(tetro, x, *nextX+2, *nextY+1) == 0 {
 		*nextX += 2
 		*nextY++
@@ -118,7 +148,7 @@ func searchAvailableYMove(tetro Tetromino, x, y int, nextX, nextY *int) {
 	}
 }
 
-func searchAvailableRightMove(tetro Tetromino, x, y int, nextX, nextY *int) {
+func searchAvailableRightMove(tetro Tetromino, x int, nextX, nextY *int) {
 	nX := *nextX
 	for {
 		statMove := isMoveAvailable(tetro, x, nX, *nextY)
@@ -132,7 +162,7 @@ func searchAvailableRightMove(tetro Tetromino, x, y int, nextX, nextY *int) {
 	}
 }
 
-func searchAvailableLefttMove(tetro Tetromino, x, y int, nextX, nextY *int) {
+func searchAvailableLeftMove(tetro Tetromino, x int, nextX, nextY *int) {
 	nX := *nextX
 	for {
 		statMove := isMoveAvailable(tetro, x, nX, *nextY)
@@ -155,6 +185,16 @@ func isMoveAvailable(tetro Tetromino, x, nextX, nextY int) int {
 		return 2
 	} else if nextY+oriY+tetro.height > 20 {
 		return 3
+	}
+
+	if !cur_board.canBindTetromino(tetro, oriX+nextX/2, oriY+nextY) {
+		if nextX < x {
+			return 1
+		} else if nextX > x {
+			return 2
+		} else {
+			return 3
+		}
 	}
 	return 0
 }
