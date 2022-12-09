@@ -5,7 +5,7 @@ import "github.com/gdamore/tcell/v2"
 const (
 	MAX_TETRIS_LEVEL  = 6
 	MAX_TETRIS_HEIGHT = 6
-	MIN_TETRIS_LEVEL  = 1
+	MIN_TETRIS_LEVEL  = 0
 	MIN_TETRIS_HEIGHT = 0
 )
 
@@ -25,6 +25,8 @@ var (
 
 	cur_X, cur_Y int
 	cur_tetro    Tetromino
+
+	pressMoveDown = make(chan bool)
 )
 
 // Initialize primary style

@@ -1,6 +1,10 @@
 package main
 
-import "github.com/gdamore/tcell/v2"
+import (
+	"time"
+
+	"github.com/gdamore/tcell/v2"
+)
 
 func handleTermEvent(scr tcell.Screen) {
 	for !is_end {
@@ -68,6 +72,7 @@ func onPressKey(scr tcell.Screen, event *tcell.EventKey, key tcell.Key) {
 		} else if key == tcell.KeyEnter {
 			is_initialization = false
 			drawTetrisScreen(scr, false)
+			go goDownPlease(scr)
 		}
 	} else if !is_initialization && !is_term_too_small {
 		if key == tcell.KeyLeft || key == tcell.KeyRight {
@@ -81,10 +86,22 @@ func onPressKey(scr tcell.Screen, event *tcell.EventKey, key tcell.Key) {
 				scr.Show()
 			}
 		} else if key == tcell.KeyDown {
-			if moveDown() {
-				printTetrisBox(scr)
-				scr.Show()
-			}
+			pressMoveDown <- true
 		}
+	}
+}
+
+func goDownPlease(scr tcell.Screen) {
+	for !is_end {
+		select {
+		case <-pressMoveDown:
+		case <-time.After(time.Second / time.Duration(cur_level+1)):
+		}
+		if is_term_too_small {
+			continue
+		}
+		moveDown()
+		printTetrisBox(scr)
+		scr.Show()
 	}
 }
