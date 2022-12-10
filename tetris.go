@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
@@ -17,6 +18,7 @@ func drawTetrisScreen(scr tcell.Screen, force bool) {
 		centerX, centerY := (term_width-45)/2, (term_height-28)/2
 		printHeader(scr, centerX, centerY)
 		printTetrisBox(scr)
+		printScore(scr)
 	}
 	if force {
 		scr.Sync()
@@ -40,6 +42,15 @@ func printTetrisBox(scr tcell.Screen) {
 		printBox(scr, x, y+6, 22, 22, CYAN_SF, true)
 		printCurBoard()
 	}
+}
+
+func printScore(scr tcell.Screen) {
+	x, y := (term_width-45)/2, (term_height-28)/2
+	printBox(scr, x+23, y+6, 22, 4, DEF_SF, false)
+	printText(scr, x+23+2, y+6+1, 22, 1, DEF_SF.Bold(true), "SCORE")
+	printText(scr, x+23+2, y+6+2, 22, 1, DEF_SF.Bold(true), "LEVEL")
+	printText(scr, x+23+2+6, y+6+1, 22, 1, GREEN_SF.Bold(true), fmt.Sprintf("%12d", score))
+	printText(scr, x+23+2+6, y+6+2, 22, 1, getStyleByInt(cur_level).Bold(true), fmt.Sprintf("%12d", cur_level))
 }
 
 func printGameOverText(scr tcell.Screen) {
@@ -93,7 +104,9 @@ func updateTetris(scr tcell.Screen) {
 			if isMoveAvailable(cur_tetro, cur_X, cur_X, cur_Y+1) != 0 {
 				oriX, oriY := cur_tetro.getOriXY()
 				cur_board.bindTetromino(cur_tetro, oriX+cur_X/2, oriY+cur_Y)
-				cur_board.updateBoard()
+				eliminated := cur_board.updateBoard()
+				calculateScore(eliminated)
+				printScore(scr)
 				if !is_game_over {
 					dropTetromino(cur_X)
 				}
@@ -108,13 +121,14 @@ func updateTetris(scr tcell.Screen) {
 	}
 }
 
-func canPlace() bool {
-	for _, c := range cur_board.con[0] {
-		if c.value > 0 {
-			return true
-		}
+func calculateScore(eliminated int) {
+	sc := 10
+	for i := 1; i <= eliminated; i++ {
+		sc += i
 	}
-	return false
+	sc = sc + 2*cur_level
+	sc = sc + 2*cur_height
+	score += sc
 }
 
 // right = true to move right, right = false to move left

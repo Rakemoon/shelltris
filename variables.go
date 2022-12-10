@@ -27,6 +27,7 @@ var (
 	is_game_over bool
 	cur_X, cur_Y int
 	predict_Y    int
+	score        int
 	cur_tetro    Tetromino
 	cur_board    TetrisBoard
 
