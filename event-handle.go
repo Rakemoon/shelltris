@@ -99,7 +99,7 @@ func goDownPlease(scr tcell.Screen) {
 		case <-time.After(time.Second / time.Duration(cur_level+1)):
 			break
 		}
-		if is_game_over && is_term_too_small {
+		if is_game_over || is_term_too_small {
 			continue
 		}
 		if force {
