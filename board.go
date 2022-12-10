@@ -1,6 +1,10 @@
 package main
 
-import "github.com/gdamore/tcell/v2"
+import (
+	"math/rand"
+
+	"github.com/gdamore/tcell/v2"
+)
 
 type BoardProp struct {
 	value int
@@ -17,6 +21,20 @@ func (board *TetrisBoard) fillBlank() {
 		board.con[ty] = make([]BoardProp, 10)
 		for tx := 0; tx < 10; tx++ {
 			board.con[ty][tx] = BoardProp{0, 7}
+		}
+	}
+}
+
+func (board *TetrisBoard) generateRandomBlock(height int) {
+	for ty := 19; ty > 19-height; ty-- {
+		hole := rand.Intn(10)
+		for tx := 0; tx < 10; tx++ {
+			if tx != hole {
+				board.con[ty][tx].value = 1
+				board.con[ty][tx].color = rand.Intn(7)
+			} else {
+				hole = rand.Intn(10)
+			}
 		}
 	}
 }
