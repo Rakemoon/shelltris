@@ -21,6 +21,7 @@ func drawTetrisScreen(scr tcell.Screen, force bool) {
 		printScore(scr)
 		printNextTetromino(scr)
 		printHoldTetromino(scr)
+		printKeyBinds(scr)
 	}
 	if force {
 		scr.Sync()
@@ -93,6 +94,29 @@ func printHoldTetromino(scr tcell.Screen) {
 	} else {
 		printBox(scr, x+23+12, y+6+4, 10, 6, DEF_SF, false)
 		printText(scr, x+23+12+3, y+6+4, 4, 1, DEF_SF.Bold(true), "HOLD")
+	}
+}
+
+func printKeyBinds(scr tcell.Screen) {
+	x, y := (term_width-45)/2, (term_height-28)/2
+	Keybinds := [][]string{
+		{"Left", "←"},
+		{"Right", "→"},
+		{"Down", "↓"},
+		{"Rotate", "↑"},
+		{"Rotate*", "z"},
+		{"Drop", "space"},
+		{"Hold", "x"},
+		{"Reset", "r"},
+		{"Quit", "q"},
+	}
+	printBox(scr, x+23, y+6+10, 22, 12, DEF_SF, false)
+	printText(scr, x+23+8, y+6+10, 7, 1, DEF_SF.Bold(true), "KEYBIND")
+	for ty, binds := range Keybinds {
+		name := binds[0]
+		key := fmt.Sprintf("%5s", binds[1])
+		printText(scr, x+23+3, ty+y+6+10+1, len(name), 1, DEF_SF.Bold(true), name)
+		printText(scr, x+23+3+11, ty+y+6+10+1, len(key), 1, DEF_SF.Bold(true), key)
 	}
 }
 
