@@ -113,7 +113,6 @@ var sess int
 func updateTetris(scr tcell.Screen) {
 	if !is_elemination_session {
 		printTetrisBox(scr)
-		printNextTetromino(scr)
 		scr.Show()
 		isCantGoDown := isMoveAvailable(cur_tetro, cur_X, cur_X, cur_Y+1) != 0
 		if isCantGoDown {
@@ -133,6 +132,7 @@ func updateTetris(scr tcell.Screen) {
 				printScore(scr)
 				if !is_game_over {
 					dropTetromino(cur_X)
+					printNextTetromino(scr)
 				}
 				is_game_over = cur_Y == predict_Y
 			}
