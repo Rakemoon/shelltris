@@ -17,8 +17,9 @@ var (
 	term_width, term_height int
 	is_term_too_small       bool
 
-	is_initialization = true
-	is_select_level   = true
+	is_initialization      = true
+	is_select_level        = true
+	is_elemination_session = false
 
 	cur_level  = MIN_TETRIS_LEVEL
 	cur_height = MIN_TETRIS_HEIGHT
@@ -29,6 +30,7 @@ var (
 	cur_board    TetrisBoard
 
 	pressMoveDown = make(chan bool)
+	updated       = make(chan bool)
 )
 
 // Initialize primary style

@@ -1,6 +1,10 @@
 package main
 
-import "github.com/gdamore/tcell/v2"
+import (
+	"time"
+
+	"github.com/gdamore/tcell/v2"
+)
 
 // 45x28
 func drawTetrisScreen(scr tcell.Screen, force bool) {
@@ -38,9 +42,9 @@ func dropTetromino(x int) {
 	if statMove := isMoveAvailable(cur_tetro, cur_X, x, cur_Y); statMove != 0 {
 		switch statMove {
 		case 1:
-			searchAvailableRightMove(cur_tetro, cur_X, &x, &cur_Y)
+			x = 0
 		case 2:
-			searchAvailableLeftMove(cur_tetro, cur_X, &x, &cur_Y)
+			x = 20 - cur_tetro.width*2
 		}
 	}
 	cur_X, cur_Y = x, -2
@@ -51,6 +55,37 @@ func createPrediction() {
 	predict_Y = cur_Y
 	for isMoveAvailable(cur_tetro, cur_X, cur_X, predict_Y+1) == 0 {
 		predict_Y++
+	}
+}
+
+var sess int
+
+func updateTetris(scr tcell.Screen) {
+	if !is_elemination_session {
+		printTetrisBox(scr)
+		scr.Show()
+		isCantGoDown := isMoveAvailable(cur_tetro, cur_X, cur_X, cur_Y+1) != 0
+		if isCantGoDown {
+			is_elemination_session = true
+			select {
+			case <-time.After(time.Second / 10):
+				sess++
+				break
+			case <-updated:
+				break
+			}
+			if isMoveAvailable(cur_tetro, cur_X, cur_X, cur_Y+1) != 0 {
+				oriX, oriY := cur_tetro.getOriXY()
+				cur_board.bindTetromino(cur_tetro, oriX+cur_X/2, oriY+cur_Y)
+				dropTetromino(cur_X)
+				is_end = predict_Y == cur_Y
+			}
+			printTetrisBox(scr)
+			scr.Show()
+			is_elemination_session = false
+		}
+	} else {
+		updated <- true
 	}
 }
 

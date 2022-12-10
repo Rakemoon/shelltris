@@ -40,8 +40,7 @@ func onPressRune(scr tcell.Screen, event *tcell.EventKey, c rune) {
 	if !is_initialization && !is_term_too_small {
 		if c == 'z' {
 			if rotateCounterClockWise() {
-				printTetrisBox(scr)
-				scr.Show()
+				updateTetris(scr)
 			}
 		} else if c == ' ' {
 			pressMoveDown <- true
@@ -73,13 +72,11 @@ func onPressKey(scr tcell.Screen, event *tcell.EventKey, key tcell.Key) {
 	} else if !is_initialization && !is_term_too_small {
 		if key == tcell.KeyLeft || key == tcell.KeyRight {
 			if moveLeftRight(key == tcell.KeyRight) {
-				printTetrisBox(scr)
-				scr.Show()
+				updateTetris(scr)
 			}
 		} else if key == tcell.KeyUp {
 			if rotateClockWise() {
-				printTetrisBox(scr)
-				scr.Show()
+				updateTetris(scr)
 			}
 		} else if key == tcell.KeyDown {
 			pressMoveDown <- false
@@ -101,20 +98,11 @@ func goDownPlease(scr tcell.Screen) {
 		}
 		if force {
 			cur_Y = predict_Y
-			oriX, oriY := cur_tetro.getOriXY()
-			cur_board.bindTetromino(cur_tetro, oriX+cur_X/2, oriY+cur_Y)
-			printTetrisBox(scr)
-			scr.Show()
-			dropTetromino(cur_X)
+			updateTetris(scr)
 			continue
 		}
 		if moveDown() {
-			printTetrisBox(scr)
-			scr.Show()
-		} else {
-			oriX, oriY := cur_tetro.getOriXY()
-			cur_board.bindTetromino(cur_tetro, oriX+cur_X/2, oriY+cur_Y)
-			dropTetromino(cur_X)
+			updateTetris(scr)
 		}
 	}
 }
