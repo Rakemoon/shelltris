@@ -24,6 +24,7 @@ var (
 	cur_level  = MIN_TETRIS_LEVEL
 	cur_height = MIN_TETRIS_HEIGHT
 
+	is_game_over bool
 	cur_X, cur_Y int
 	predict_Y    int
 	cur_tetro    Tetromino

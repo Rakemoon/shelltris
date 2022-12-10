@@ -58,3 +58,24 @@ func (board TetrisBoard) print(scr tcell.Screen, x, y int) {
 		}
 	}
 }
+
+func (board *TetrisBoard) updateBoard() int {
+	var count int
+	nextCon := make([][]BoardProp, 0)
+	for _, con := range board.con {
+		var sum int
+		for _, c := range con {
+			sum += c.value
+		}
+		if sum < 10 {
+			nextCon = append(nextCon, con)
+		} else {
+			blankCon := make([][]BoardProp, 1)
+			blankCon[0] = make([]BoardProp, 10)
+			nextCon = append(blankCon, nextCon...)
+			count++
+		}
+	}
+	board.con = nextCon
+	return count
+}

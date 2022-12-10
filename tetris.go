@@ -27,13 +27,28 @@ func drawTetrisScreen(scr tcell.Screen, force bool) {
 
 func printTetrisBox(scr tcell.Screen) {
 	x, y := (term_width-45)/2, (term_height-28)/2
-	printBox(scr, x, y+6, 22, 22, DEF_SF, true)
-	cur_board.print(scr, x+1, y+6+1)
-	cur_tetro.print(scr, x+1+cur_X, y+6+1+predict_Y, y+6+1, true, "◤◢")
-	cur_tetro.print(scr, x+1+cur_X, y+6+1+cur_Y, y+6+1, true, "██")
+	printCurBoard := func() {
+		cur_board.print(scr, x+1, y+6+1)
+		cur_tetro.print(scr, x+1+cur_X, y+6+1+predict_Y, y+6+1, true, "◤◢")
+		cur_tetro.print(scr, x+1+cur_X, y+6+1+cur_Y, y+6+1, true, "██")
+	}
+	if is_game_over {
+		printBox(scr, x, y+6, 22, 22, RED_SF, true)
+		printCurBoard()
+		printGameOverText(scr)
+	} else {
+		printBox(scr, x, y+6, 22, 22, CYAN_SF, true)
+		printCurBoard()
+	}
 }
 
-func dropTetromino(x int) {
+func printGameOverText(scr tcell.Screen) {
+	x, y := (term_width-45)/2, (term_height-28)/2
+	printBox(scr, x+6, y+5+10, 11, 3, RED_SF, false)
+	printText(scr, x+6+1, y+5+10+1, 9, 1, RED_SF.Bold(true), "GAME OVER")
+}
+
+func dropTetromino(x int) bool {
 	cur_tetro = Tetromino{}
 	cur_tetro.setRandom()
 	if x == -1 {
@@ -49,6 +64,7 @@ func dropTetromino(x int) {
 	}
 	cur_X, cur_Y = x, -2
 	createPrediction()
+	return true
 }
 
 func createPrediction() {
@@ -77,8 +93,11 @@ func updateTetris(scr tcell.Screen) {
 			if isMoveAvailable(cur_tetro, cur_X, cur_X, cur_Y+1) != 0 {
 				oriX, oriY := cur_tetro.getOriXY()
 				cur_board.bindTetromino(cur_tetro, oriX+cur_X/2, oriY+cur_Y)
-				dropTetromino(cur_X)
-				is_end = predict_Y == cur_Y
+				cur_board.updateBoard()
+				if !is_game_over {
+					dropTetromino(cur_X)
+				}
+				is_game_over = cur_Y == predict_Y
 			}
 			printTetrisBox(scr)
 			scr.Show()
@@ -87,6 +106,15 @@ func updateTetris(scr tcell.Screen) {
 	} else {
 		updated <- true
 	}
+}
+
+func canPlace() bool {
+	for _, c := range cur_board.con[0] {
+		if c.value > 0 {
+			return true
+		}
+	}
+	return false
 }
 
 // right = true to move right, right = false to move left

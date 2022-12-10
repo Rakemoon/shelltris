@@ -73,8 +73,13 @@ func decInitChoose() {
 
 func initTetrisSession(scr tcell.Screen) {
 	is_initialization = false
-	cur_board.fillBlank()
-	dropTetromino(-1)
+	restartTetris()
 	drawTetrisScreen(scr, false)
 	go goDownPlease(scr)
+}
+
+func restartTetris() {
+	is_game_over = false
+	cur_board.fillBlank()
+	dropTetromino(-1)
 }

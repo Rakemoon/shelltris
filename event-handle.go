@@ -38,12 +38,18 @@ func onPressRune(scr tcell.Screen, event *tcell.EventKey, c rune) {
 		return
 	}
 	if !is_initialization && !is_term_too_small {
-		if c == 'z' {
-			if rotateCounterClockWise() {
-				updateTetris(scr)
+		if c == 'r' {
+			restartTetris()
+			updateTetris(scr)
+		}
+		if !is_game_over {
+			if c == 'z' {
+				if rotateCounterClockWise() {
+					updateTetris(scr)
+				}
+			} else if c == ' ' {
+				pressMoveDown <- true
 			}
-		} else if c == ' ' {
-			pressMoveDown <- true
 		}
 	}
 }
@@ -69,7 +75,7 @@ func onPressKey(scr tcell.Screen, event *tcell.EventKey, key tcell.Key) {
 		} else if key == tcell.KeyEnter {
 			initTetrisSession(scr)
 		}
-	} else if !is_initialization && !is_term_too_small {
+	} else if !is_initialization && !is_term_too_small && !is_game_over {
 		if key == tcell.KeyLeft || key == tcell.KeyRight {
 			if moveLeftRight(key == tcell.KeyRight) {
 				updateTetris(scr)
@@ -93,7 +99,7 @@ func goDownPlease(scr tcell.Screen) {
 		case <-time.After(time.Second / time.Duration(cur_level+1)):
 			break
 		}
-		if is_term_too_small {
+		if is_game_over && is_term_too_small {
 			continue
 		}
 		if force {
