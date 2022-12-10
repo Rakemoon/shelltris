@@ -19,6 +19,7 @@ func drawTetrisScreen(scr tcell.Screen, force bool) {
 		printHeader(scr, centerX, centerY)
 		printTetrisBox(scr)
 		printScore(scr)
+		printNextTetromino(scr)
 	}
 	if force {
 		scr.Sync()
@@ -53,6 +54,24 @@ func printScore(scr tcell.Screen) {
 	printText(scr, x+23+2+6, y+6+2, 22, 1, getStyleByInt(cur_level).Bold(true), fmt.Sprintf("%12d", cur_level))
 }
 
+func printNextTetromino(scr tcell.Screen) {
+	x, y := (term_width-45)/2, (term_height-28)/2
+	tx, ty, withOri := 0, 0, true
+	if next_tetro.color != 1 {
+		if next_tetro.color == 3 {
+			tx, ty, withOri = 2, 1, false
+		} else {
+			tx, ty, withOri = 1, 1, false
+		}
+
+	}
+	//printBox(scr, x+23, y+6+4, 10, 6, DEF_SF, false)
+	//cur_tetro.print(scr, x+23+1+tx, y+6+4+1+ty, y+6+4, withOri, "██")
+	printBox(scr, x+23+12, y+6+4, 10, 6, DEF_SF, false)
+	printText(scr, x+23+12+3, y+6+4, 4, 1, DEF_SF.Bold(true), "NEXT")
+	next_tetro.print(scr, x+23+12+1+tx, y+6+4+1+ty, y+6+4, withOri, "██")
+}
+
 func printGameOverText(scr tcell.Screen) {
 	x, y := (term_width-45)/2, (term_height-28)/2
 	printBox(scr, x+6, y+5+10, 11, 3, RED_SF, false)
@@ -60,11 +79,15 @@ func printGameOverText(scr tcell.Screen) {
 }
 
 func dropTetromino(x int) bool {
-	cur_tetro = Tetromino{}
-	cur_tetro.setRandom()
 	if x == -1 {
+		cur_tetro = Tetromino{}
+		cur_tetro.setRandom()
 		x = 4
+	} else {
+		cur_tetro = next_tetro
 	}
+	next_tetro = Tetromino{}
+	next_tetro.setRandom()
 	if statMove := isMoveAvailable(cur_tetro, cur_X, x, cur_Y); statMove != 0 {
 		switch statMove {
 		case 1:
@@ -90,6 +113,7 @@ var sess int
 func updateTetris(scr tcell.Screen) {
 	if !is_elemination_session {
 		printTetrisBox(scr)
+		printNextTetromino(scr)
 		scr.Show()
 		isCantGoDown := isMoveAvailable(cur_tetro, cur_X, cur_X, cur_Y+1) != 0
 		if isCantGoDown {

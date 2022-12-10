@@ -29,6 +29,7 @@ var (
 	predict_Y    int
 	score        int
 	cur_tetro    Tetromino
+	next_tetro   Tetromino
 	cur_board    TetrisBoard
 
 	pressMoveDown = make(chan bool)
