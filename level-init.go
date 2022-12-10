@@ -80,7 +80,9 @@ func initTetrisSession(scr tcell.Screen) {
 
 func restartTetris() {
 	is_game_over = false
+	is_can_hold = true
 	score = 0
+	hold_tetro.color = -1
 	cur_board.fillBlank()
 	cur_board.generateRandomBlock(cur_height * 2)
 	dropTetromino(-1)

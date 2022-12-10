@@ -49,6 +49,12 @@ func onPressRune(scr tcell.Screen, event *tcell.EventKey, c rune) {
 				}
 			} else if c == ' ' {
 				pressMoveDown <- true
+			} else if c == 'x' && is_can_hold {
+				is_can_hold = false
+				dropTetromino(cur_X)
+				printHoldTetromino(scr)
+				printNextTetromino(scr)
+				updateTetris(scr)
 			}
 		}
 	}

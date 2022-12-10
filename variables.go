@@ -25,11 +25,13 @@ var (
 	cur_height = MIN_TETRIS_HEIGHT
 
 	is_game_over bool
+	is_can_hold  bool
 	cur_X, cur_Y int
 	predict_Y    int
 	score        int
 	cur_tetro    Tetromino
 	next_tetro   Tetromino
+	hold_tetro   Tetromino
 	cur_board    TetrisBoard
 
 	pressMoveDown = make(chan bool)

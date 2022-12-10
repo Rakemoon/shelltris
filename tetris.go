@@ -20,6 +20,7 @@ func drawTetrisScreen(scr tcell.Screen, force bool) {
 		printTetrisBox(scr)
 		printScore(scr)
 		printNextTetromino(scr)
+		printHoldTetromino(scr)
 	}
 	if force {
 		scr.Sync()
@@ -65,11 +66,34 @@ func printNextTetromino(scr tcell.Screen) {
 		}
 
 	}
-	//printBox(scr, x+23, y+6+4, 10, 6, DEF_SF, false)
-	//cur_tetro.print(scr, x+23+1+tx, y+6+4+1+ty, y+6+4, withOri, "██")
-	printBox(scr, x+23+12, y+6+4, 10, 6, DEF_SF, false)
-	printText(scr, x+23+12+3, y+6+4, 4, 1, DEF_SF.Bold(true), "NEXT")
-	next_tetro.print(scr, x+23+12+1+tx, y+6+4+1+ty, y+6+4, withOri, "██")
+	var plus int
+	if hold_tetro.color != -1 {
+		plus += 12
+	}
+	printBox(scr, x+23+plus, y+6+4, 10, 6, DEF_SF, false)
+	printText(scr, x+23+3+plus, y+6+4, 4, 1, DEF_SF.Bold(true), "NEXT")
+	next_tetro.print(scr, x+23+1+tx+plus, y+6+4+1+ty, y+6+4, withOri, "██")
+}
+
+func printHoldTetromino(scr tcell.Screen) {
+	x, y := (term_width-45)/2, (term_height-28)/2
+	tx, ty, withOri := 0, 0, true
+	if hold_tetro.color != 1 {
+		if hold_tetro.color == 3 {
+			tx, ty, withOri = 2, 1, false
+		} else {
+			tx, ty, withOri = 1, 1, false
+		}
+
+	}
+	if hold_tetro.color != -1 {
+		printBox(scr, x+23, y+6+4, 10, 6, DEF_SF, false)
+		printText(scr, x+23+3, y+6+4, 4, 1, DEF_SF.Bold(true), "HOLD")
+		hold_tetro.print(scr, x+23+1+tx, y+6+4+1+ty, y+6+4, withOri, "██")
+	} else {
+		printBox(scr, x+23+12, y+6+4, 10, 6, DEF_SF, false)
+		printText(scr, x+23+12+3, y+6+4, 4, 1, DEF_SF.Bold(true), "HOLD")
+	}
 }
 
 func printGameOverText(scr tcell.Screen) {
@@ -82,12 +106,25 @@ func dropTetromino(x int) bool {
 	if x == -1 {
 		cur_tetro = Tetromino{}
 		cur_tetro.setRandom()
+		next_tetro = Tetromino{}
+		next_tetro.setRandom()
 		x = 4
 	} else {
-		cur_tetro = next_tetro
+		if !is_can_hold && hold_tetro.color == -1 {
+			hold_tetro = cur_tetro
+			cur_tetro = next_tetro
+			next_tetro = Tetromino{}
+			next_tetro.setRandom()
+		} else if !is_can_hold && hold_tetro.color != -1 {
+			cur_tetro = hold_tetro
+			hold_tetro.color = -1
+			is_can_hold = true
+		} else {
+			cur_tetro = next_tetro
+			next_tetro = Tetromino{}
+			next_tetro.setRandom()
+		}
 	}
-	next_tetro = Tetromino{}
-	next_tetro.setRandom()
 	if statMove := isMoveAvailable(cur_tetro, cur_X, x, cur_Y); statMove != 0 {
 		switch statMove {
 		case 1:
@@ -133,6 +170,7 @@ func updateTetris(scr tcell.Screen) {
 				if !is_game_over {
 					dropTetromino(cur_X)
 					printNextTetromino(scr)
+					printHoldTetromino(scr)
 				}
 				is_game_over = cur_Y == predict_Y
 			}
