@@ -40,6 +40,9 @@ func onPressRune(scr tcell.Screen, event *tcell.EventKey, c rune) {
 	if !is_initialization && !is_term_too_small {
 		if c == 'r' {
 			restartTetris()
+			printHoldTetromino(scr)
+			printNextTetromino(scr)
+			printScore(scr)
 			updateTetris(scr)
 		}
 		if !is_game_over {
