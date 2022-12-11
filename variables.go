@@ -26,6 +26,7 @@ var (
 
 	is_game_over bool
 	is_can_hold  bool
+	is_paused    bool
 	cur_X, cur_Y int
 	predict_Y    int
 	score        int

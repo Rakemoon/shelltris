@@ -80,6 +80,7 @@ func initTetrisSession(scr tcell.Screen) {
 
 func restartTetris() {
 	is_game_over = false
+	is_paused = false
 	is_can_hold = true
 	score = 0
 	hold_tetro.color = -1

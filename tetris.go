@@ -12,6 +12,7 @@ func drawTetrisScreen(scr tcell.Screen, force bool) {
 	scr.Fill(0, DEF_SF)
 	if term_width < 45 || term_height < 28 {
 		is_term_too_small = true
+		is_paused = true
 		printYourTermIsTooSmall(scr, 45, 28)
 	} else {
 		is_term_too_small = false
@@ -41,6 +42,10 @@ func printTetrisBox(scr tcell.Screen) {
 		printBox(scr, x, y+6, 22, 22, RED_SF, true)
 		printCurBoard()
 		printGameOverText(scr)
+	} else if is_paused {
+		printBox(scr, x, y+6, 22, 22, YELLOW_SF, true)
+		printCurBoard()
+		printPauseText(scr)
 	} else {
 		printBox(scr, x, y+6, 22, 22, CYAN_SF, true)
 		printCurBoard()
@@ -107,6 +112,7 @@ func printKeyBinds(scr tcell.Screen) {
 		{"Rotate*", "z"},
 		{"Drop", "space"},
 		{"Hold", "x"},
+		{"Pause", "p"},
 		{"Reset", "r"},
 		{"Quit", "q"},
 	}
@@ -124,6 +130,12 @@ func printGameOverText(scr tcell.Screen) {
 	x, y := (term_width-45)/2, (term_height-28)/2
 	printBox(scr, x+6, y+5+10, 11, 3, RED_SF, false)
 	printText(scr, x+6+1, y+5+10+1, 9, 1, RED_SF.Bold(true), "GAME OVER")
+}
+
+func printPauseText(scr tcell.Screen) {
+	x, y := (term_width-45)/2, (term_height-28)/2
+	printBox(scr, x+8, y+5+10, 7, 3, YELLOW_SF, false)
+	printText(scr, x+8+1, y+5+10+1, 5, 1, YELLOW_SF.Bold(true), "PAUSE")
 }
 
 func dropTetromino(x int) bool {
